@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+
+    <meta name="theme-color" content="#2563eb">
 
     <title>{% block title %}せどり在庫管理{% endblock %}</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
 </head>
+
 <body>
 
     {% include 'components/bottom_nav.html' %}
@@ -22,4 +28,5 @@
     <script src="{{ url_for('static', filename='js/inventory.js') }}"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
 </body>
+
 </html>
