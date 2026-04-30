@@ -9,6 +9,7 @@ from extensions.db import db
 
 from models.book import Book
 from models.cost import Cost
+from models.sale import Sale
 
 
 api_bp = Blueprint("api", __name__)
@@ -46,6 +47,15 @@ def create_book():
 
     data = request.json
 
+    purchase_date = None
+
+    if data.get("purchase_date"):
+
+        purchase_date = datetime.strptime(
+            data.get("purchase_date"),
+            "%Y-%m-%d"
+        ).date()
+
     book = Book(
 
         title=data.get("title"),
@@ -58,6 +68,10 @@ def create_book():
 
         publisher=data.get("publisher"),
 
+        book_format=data.get("book_format"),
+
+        target=data.get("target"),
+
         purchase_price=int(
             data.get("purchase_price") or 0
         ),
@@ -66,13 +80,11 @@ def create_book():
             "purchase_store"
         ),
 
-        purchase_date=datetime.strptime(
-            data.get("purchase_date"),
-            "%Y-%m-%d"
-        ),
+        purchase_date=purchase_date,
 
-        # 新規登録時は出品中
-        status=STATUS_LISTING
+        status=STATUS_LISTING,
+
+        memo=data.get("memo")
 
     )
 
@@ -118,6 +130,16 @@ def update_book(book_id):
         book.genre
     )
 
+    book.book_format = data.get(
+        "book_format",
+        book.book_format
+    )
+
+    book.target = data.get(
+        "target",
+        book.target
+    )
+
     book.purchase_price = int(
         data.get(
             "purchase_price",
@@ -148,7 +170,7 @@ def update_book(book_id):
 
 
 # =========================
-# 販売更新
+# 単品販売更新
 # =========================
 @api_bp.route(
     "/books/<int:book_id>/sale",
@@ -160,65 +182,58 @@ def update_sale(book_id):
 
     data = request.json
 
-    # =========================
-    # 数値
-    # =========================
-
     sale_price = int(
         data.get("sale_price") or 0
     )
 
-    book.sale_price = sale_price
-
-    book.fee = int(
+    fee = int(
         data.get("fee") or 0
     )
 
-    book.shipping_cost = int(
+    shipping_cost = int(
         data.get("shipping_cost") or 0
     )
 
-    # =========================
-    # 販売日
-    # =========================
-
-    sale_date = data.get("sale_date")
-
-    if sale_date:
-
-        book.sale_date = datetime.strptime(
-            sale_date,
-            "%Y-%m-%d"
-        )
-
-    elif sale_price > 0:
-
-        # 自動で今日の日付
-        book.sale_date = datetime.now()
-
-    else:
-
-        # 販売解除時
-        book.sale_date = None
-
-    # =========================
-    # 配送方法
-    # =========================
-
-    book.shipping_method = data.get(
+    shipping_method = data.get(
         "shipping_method"
     )
 
+    sale_date = data.get("sale_date")
+
     # =========================
-    # 状態自動判定
+    # Sale作成
     # =========================
 
     if sale_price > 0:
 
+        sale = Sale(
+            sale_price=sale_price,
+            fee=fee,
+            shipping_cost=shipping_cost,
+            shipping_method=shipping_method
+        )
+
+        if sale_date:
+
+            sale.sale_date = datetime.strptime(
+                sale_date,
+                "%Y-%m-%d"
+            ).date()
+
+        else:
+
+            sale.sale_date = datetime.now().date()
+
+        db.session.add(sale)
+
+        db.session.flush()
+
+        book.sale_id = sale.id
         book.status = STATUS_SOLD
 
     else:
 
+        book.sale_id = None
         book.status = STATUS_LISTING
 
     db.session.commit()
@@ -229,12 +244,86 @@ def update_sale(book_id):
 
 
 # =========================
+# セット販売
+# =========================
+@api_bp.route(
+    "/sales/group",
+    methods=["POST"]
+)
+def create_group_sale():
+
+    data = request.json
+
+    book_ids = data.get("book_ids", [])
+
+    if not book_ids:
+
+        return jsonify({
+            "message": "book_ids required"
+        }), 400
+
+    sale = Sale(
+
+        sale_price=int(
+            data.get("sale_price") or 0
+        ),
+
+        fee=int(
+            data.get("fee") or 0
+        ),
+
+        shipping_cost=int(
+            data.get("shipping_cost") or 0
+        ),
+
+        shipping_method=data.get(
+            "shipping_method"
+        )
+
+    )
+
+    sale_date = data.get("sale_date")
+
+    if sale_date:
+
+        sale.sale_date = datetime.strptime(
+            sale_date,
+            "%Y-%m-%d"
+        ).date()
+
+    else:
+
+        sale.sale_date = datetime.now().date()
+
+    db.session.add(sale)
+
+    db.session.flush()
+
+    books = Book.query.filter(
+        Book.id.in_(book_ids)
+    ).all()
+
+    for book in books:
+
+        book.sale_id = sale.id
+        book.status = STATUS_SOLD
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "group sale created",
+        "sale_id": sale.id
+    })
+
+
+# =========================
 # 分析サマリー
 # =========================
 @api_bp.route("/analytics/summary")
 def analytics_summary():
 
     books = Book.query.all()
+    sales = Sale.query.all()
 
     total_purchase = sum(
         b.purchase_price or 0
@@ -242,18 +331,18 @@ def analytics_summary():
     )
 
     total_sales = sum(
-        b.sale_price or 0
-        for b in books
+        s.sale_price or 0
+        for s in sales
     )
 
     total_fee = sum(
-        b.fee or 0
-        for b in books
+        s.fee or 0
+        for s in sales
     )
 
     total_shipping = sum(
-        b.shipping_cost or 0
-        for b in books
+        s.shipping_cost or 0
+        for s in sales
     )
 
     total_costs = sum(
@@ -271,35 +360,27 @@ def analytics_summary():
 
     return jsonify({
 
-        "purchase":
-            total_purchase,
+        "purchase": total_purchase,
 
-        "sales":
-            total_sales,
+        "sales": total_sales,
 
-        "fees":
-            total_fee,
+        "fees": total_fee,
 
-        "shipping":
-            total_shipping,
+        "shipping": total_shipping,
 
-        "costs":
-            total_costs,
+        "costs": total_costs,
 
-        "profit":
-            profit,
+        "profit": profit,
 
-        "inventory_count":
-            len([
-                b for b in books
-                if b.status != STATUS_SOLD
-            ]),
+        "inventory_count": len([
+            b for b in books
+            if b.status != STATUS_SOLD
+        ]),
 
-        "sold_count":
-            len([
-                b for b in books
-                if b.status == STATUS_SOLD
-            ])
+        "sold_count": len([
+            b for b in books
+            if b.status == STATUS_SOLD
+        ])
 
     })
 
@@ -310,62 +391,44 @@ def analytics_summary():
 @api_bp.route("/analytics/monthly")
 def analytics_monthly():
 
-    books = Book.query.all()
+    sales = Sale.query.all()
     costs = Cost.query.all()
 
     monthly_sales = defaultdict(int)
     monthly_profit = defaultdict(int)
     monthly_costs = defaultdict(int)
 
-    # =========================
-    # 売上・利益
-    # =========================
+    for sale in sales:
 
-    for book in books:
+        if not sale.sale_date:
+            continue
 
-        if (
-            book.sale_date
-            and book.status == STATUS_SOLD
-        ):
+        month = sale.sale_date.strftime(
+            "%Y-%m"
+        )
 
-            month = book.sale_date.strftime(
-                "%Y-%m"
-            )
+        books = Book.query.filter_by(
+            sale_id=sale.id
+        ).all()
 
-            sale_price = (
-                book.sale_price or 0
-            )
+        purchase_total = sum(
+            b.purchase_price or 0
+            for b in books
+        )
 
-            purchase_price = (
-                book.purchase_price or 0
-            )
+        sale_price = sale.sale_price or 0
+        fee = sale.fee or 0
+        shipping = sale.shipping_cost or 0
 
-            fee = (
-                book.fee or 0
-            )
+        profit = (
+            sale_price
+            - purchase_total
+            - fee
+            - shipping
+        )
 
-            shipping = (
-                book.shipping_cost or 0
-            )
-
-            profit = (
-                sale_price
-                - purchase_price
-                - fee
-                - shipping
-            )
-
-            monthly_sales[month] += (
-                sale_price
-            )
-
-            monthly_profit[month] += (
-                profit
-            )
-
-    # =========================
-    # 経費
-    # =========================
+        monthly_sales[month] += sale_price
+        monthly_profit[month] += profit
 
     for cost in costs:
 
@@ -376,10 +439,6 @@ def analytics_monthly():
         monthly_costs[month] += (
             cost.amount or 0
         )
-
-    # =========================
-    # 月一覧統合
-    # =========================
 
     all_months = sorted(set(
 
@@ -419,52 +478,42 @@ def analytics_monthly():
 @api_bp.route("/analytics/genre-profit")
 def analytics_genre_profit():
 
-    books = Book.query.all()
+    books = Book.query.filter_by(
+        status=STATUS_SOLD
+    ).all()
 
     genre_profit = defaultdict(int)
 
     for book in books:
 
-        if book.status != STATUS_SOLD:
+        if not book.sale:
             continue
 
-        genre = (
-            book.genre
-            or "未分類"
-        )
+        genre = book.genre or "未分類"
+
+        sale = book.sale
 
         profit = (
-
-            (book.sale_price or 0)
-
+            (sale.sale_price or 0)
             -
-
+            (sale.fee or 0)
+            -
+            (sale.shipping_cost or 0)
+            -
             (book.purchase_price or 0)
-
-            -
-
-            (book.fee or 0)
-
-            -
-
-            (book.shipping_cost or 0)
-
         )
 
         genre_profit[genre] += profit
 
-    labels = list(
-        genre_profit.keys()
-    )
-
-    values = list(
-        genre_profit.values()
-    )
-
     return jsonify({
 
-        "labels": labels,
-        "values": values
+        "labels": list(
+            genre_profit.keys()
+        ),
+
+        "values": list(
+            genre_profit.values()
+        )
 
     })
 
@@ -477,18 +526,15 @@ def analytics_status():
 
     books = Book.query.all()
 
-    inventory = 0
-    sold = 0
+    inventory = len([
+        b for b in books
+        if b.status != STATUS_SOLD
+    ])
 
-    for book in books:
-
-        if book.status == STATUS_SOLD:
-
-            sold += 1
-
-        else:
-
-            inventory += 1
+    sold = len([
+        b for b in books
+        if b.status == STATUS_SOLD
+    ])
 
     return jsonify({
 
@@ -511,7 +557,9 @@ def analytics_status():
 @api_bp.route("/analytics/rotation")
 def analytics_rotation():
 
-    books = Book.query.all()
+    books = Book.query.filter_by(
+        status=STATUS_SOLD
+    ).all()
 
     labels = []
     values = []
@@ -520,12 +568,12 @@ def analytics_rotation():
 
         if (
             book.purchase_date
-            and book.sale_date
-            and book.status == STATUS_SOLD
+            and book.sale
+            and book.sale.sale_date
         ):
 
             days = (
-                book.sale_date
+                book.sale.sale_date
                 -
                 book.purchase_date
             ).days
@@ -550,34 +598,30 @@ def analytics_rotation():
 @api_bp.route("/analytics/profit-ranking")
 def analytics_profit_ranking():
 
-    books = Book.query.all()
+    books = Book.query.filter_by(
+        status=STATUS_SOLD
+    ).all()
 
     ranking = []
 
     for book in books:
 
         if (
-            book.status != STATUS_SOLD
-            or not book.purchase_price
+            not book.purchase_price
+            or not book.sale
         ):
             continue
 
+        sale = book.sale
+
         profit = (
-
-            (book.sale_price or 0)
-
+            (sale.sale_price or 0)
             -
-
+            (sale.fee or 0)
+            -
+            (sale.shipping_cost or 0)
+            -
             (book.purchase_price or 0)
-
-            -
-
-            (book.fee or 0)
-
-            -
-
-            (book.shipping_cost or 0)
-
         )
 
         rate = (
@@ -587,25 +631,18 @@ def analytics_profit_ranking():
 
         ranking.append({
 
-            "title":
-                book.title,
+            "title": book.title,
 
-            "rate":
-                round(rate, 1),
+            "rate": round(rate, 1),
 
-            "profit":
-                profit
+            "profit": profit
 
         })
 
     ranking = sorted(
-
         ranking,
-
         key=lambda x: x["rate"],
-
         reverse=True
-
     )[:10]
 
     return jsonify(ranking)

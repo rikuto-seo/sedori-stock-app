@@ -30,9 +30,18 @@ const saleStatusInput = document.getElementById(
     "sale-status"
 );
 
+const shippingMethodInput = document.getElementById(
+    "shipping-method"
+);
+
+const shippingInput = document.getElementById(
+    "sale-shipping"
+);
+
 let books = [];
 
 let feeManuallyEdited = false;
+let shippingManuallyEdited = false;
 
 
 /* =========================
@@ -159,7 +168,7 @@ function renderBooks(bookList) {
                 <div class="inventory-title-area">
 
                     <div class="inventory-title">
-                        ${book.title}
+                        ${book.title || ""}
                     </div>
 
                     ${profitText}
@@ -620,6 +629,7 @@ function closeDetailModal() {
 function openSaleModal(book) {
 
     feeManuallyEdited = false;
+    shippingManuallyEdited = false;
 
     document.getElementById(
         "sale-modal"
@@ -635,17 +645,15 @@ function openSaleModal(book) {
     saleFeeInput.value =
         book.fee || "";
 
-    document.getElementById(
-        "sale-shipping"
-    ).value =
+    shippingInput.value =
         book.shipping_cost || "";
 
     saleDateInput.value =
-        book.sale_date || "";
+        book.sale_date
+            ? book.sale_date.slice(0, 10)
+            : "";
 
-    document.getElementById(
-        "shipping-method"
-    ).value =
+    shippingMethodInput.value =
         book.shipping_method || "";
 
     saleStatusInput.value =
@@ -653,6 +661,10 @@ function openSaleModal(book) {
 
 }
 
+
+/* =========================
+   販売モーダル閉じる
+========================= */
 
 function closeSaleModal() {
 
@@ -674,6 +686,67 @@ if (saleFeeInput) {
         () => {
 
             feeManuallyEdited = true;
+
+        }
+    );
+
+}
+
+
+/* =========================
+   送料手動変更
+========================= */
+
+if (shippingInput) {
+
+    shippingInput.addEventListener(
+        "input",
+        () => {
+
+            shippingManuallyEdited = true;
+
+        }
+    );
+
+}
+
+
+/* =========================
+   配送方法変更
+========================= */
+
+if (shippingMethodInput) {
+
+    shippingMethodInput.addEventListener(
+        "change",
+        () => {
+
+            if (shippingManuallyEdited) {
+
+                return;
+
+            }
+
+            const method =
+                shippingMethodInput.value;
+
+            if (
+                method ===
+                "らくらくメルカリ便"
+            ) {
+
+                shippingInput.value = 210;
+
+            }
+
+            else if (
+                method ===
+                "ゆうゆうパケットポストミニ"
+            ) {
+
+                shippingInput.value = 160;
+
+            }
 
         }
     );
@@ -865,17 +938,13 @@ if (saleForm) {
                     saleFeeInput.value,
 
                 shipping_cost:
-                    document.getElementById(
-                        "sale-shipping"
-                    ).value,
+                    shippingInput.value,
 
                 sale_date:
                     saleDateInput.value,
 
                 shipping_method:
-                    document.getElementById(
-                        "shipping-method"
-                    ).value,
+                    shippingMethodInput.value,
 
                 status:
                     saleStatusInput.value

@@ -13,11 +13,7 @@
     <!-- フィルター -->
     <div class="filter-container">
 
-        <input
-            type="text"
-            id="search-input"
-            placeholder="タイトル・ISBN検索"
-        >
+        <input type="text" id="search-input" placeholder="タイトル・ISBN検索">
 
         <select id="status-filter">
             <option value="">すべての状態</option>
@@ -33,10 +29,7 @@
     </div>
 
     <!-- 一覧 -->
-    <div
-        id="inventory-table"
-        class="inventory-table"
-    ></div>
+    <div id="inventory-table" class="inventory-table"></div>
 
 </div>
 
@@ -50,11 +43,7 @@
 
             <h2>詳細編集</h2>
 
-            <button
-                type="button"
-                class="close-modal"
-                onclick="closeDetailModal()"
-            >
+            <button type="button" class="close-modal" onclick="closeDetailModal()">
                 ✕
             </button>
 
@@ -104,10 +93,7 @@
                 <textarea id="detail-memo"></textarea>
             </div>
 
-            <button
-                type="submit"
-                class="save-button"
-            >
+            <button type="submit" class="save-button">
                 保存
             </button>
 
@@ -127,11 +113,7 @@
 
             <h2>販売入力</h2>
 
-            <button
-                type="button"
-                class="close-modal"
-                onclick="closeSaleModal()"
-            >
+            <button type="button" class="close-modal" onclick="closeSaleModal()">
                 ✕
             </button>
 
@@ -163,24 +145,39 @@
 
             <div class="form-group">
                 <label>配送方法</label>
-                <input type="text" id="shipping-method">
+                <div class="form-group">
+
+                    <label>配送方法</label>
+
+                    <select id="shipping-method">
+
+                        <option value="">選択してください</option>
+
+                        <option value="らくらくメルカリ便">
+                            らくらくメルカリ便
+                        </option>
+
+                        <option value="ゆうゆうパケットポストミニ">
+                            ゆうゆうパケットポストミニ
+                        </option>
+
+                    </select>
+
+                </div>
             </div>
 
             <div class="form-group">
                 <label>状態</label>
 
                 <select id="sale-status">
-                    
+
                     <option value="出品中">出品中</option>
                     <option value="売却済">売却済</option>
                 </select>
 
             </div>
 
-            <button
-                type="submit"
-                class="save-button"
-            >
+            <button type="submit" class="save-button">
                 保存
             </button>
 
