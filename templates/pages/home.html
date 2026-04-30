@@ -38,21 +38,35 @@
             <!-- ISBN -->
             <div class="form-group">
 
-                <label>ISBN</label>
+                <label>
+                    ISBN
+                </label>
 
-                <input
-                    type="text"
-                    name="isbn"
-                    placeholder="978..."
-                    inputmode="numeric"
-                >
+                <div class="input-prefix-group">
+
+                    <span class="input-prefix">
+                        978
+                    </span>
+
+                    <input
+                        type="text"
+                        name="isbn"
+                        id="isbn-input"
+                        placeholder="xxxxxxxxxx"
+                        maxlength="10"
+                        inputmode="numeric"
+                    >
+
+                </div>
 
             </div>
 
             <!-- タイトル -->
             <div class="form-group">
 
-                <label>タイトル</label>
+                <label>
+                    タイトル
+                </label>
 
                 <input
                     type="text"
@@ -70,13 +84,22 @@
                     Cコード
                 </label>
 
-                <input
-                    type="text"
-                    name="c_code"
-                    id="c-code-input"
-                    placeholder="C0077"
-                    maxlength="5"
-                >
+                <div class="input-prefix-group">
+
+                    <span class="input-prefix">
+                        C
+                    </span>
+
+                    <input
+                        type="text"
+                        name="c_code"
+                        id="c-code-input"
+                        placeholder="0077"
+                        maxlength="4"
+                        inputmode="numeric"
+                    >
+
+                </div>
 
                 <small class="input-help">
                     入力すると販売対象・形態・ジャンルを自動入力
@@ -87,13 +110,32 @@
             <!-- 出版社 -->
             <div class="form-group">
 
-                <label>出版社</label>
+                <label>
+                    出版社
+                </label>
 
                 <input
                     type="text"
                     name="publisher"
-                    placeholder="出版社"
+                    id="publisher-input"
+                    list="publisher-list"
+                    placeholder="出版社を入力"
                 >
+
+                <datalist id="publisher-list">
+
+                    <option value="講談社">
+                    <option value="集英社">
+                    <option value="小学館">
+                    <option value="KADOKAWA">
+                    <option value="白泉社">
+                    <option value="秋田書店">
+                    <option value="スクウェア・エニックス">
+                    <option value="技術評論社">
+                    <option value="SBクリエイティブ">
+                    <option value="翔泳社">
+
+                </datalist>
 
             </div>
 
@@ -231,27 +273,168 @@
 
 </div>
 
+<style>
+
+.input-prefix-group {
+
+    display: flex;
+    align-items: center;
+
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+
+    overflow: hidden;
+
+    background: white;
+
+}
+
+.input-prefix {
+
+    padding: 12px 14px;
+
+    background: #f3f4f6;
+
+    color: #6b7280;
+
+    font-weight: bold;
+
+    border-right: 1px solid #d1d5db;
+
+}
+
+.input-prefix-group input {
+
+    flex: 1;
+
+    border: none;
+
+    padding: 12px;
+
+    font-size: 16px;
+
+    outline: none;
+
+}
+
+.input-help {
+
+    display: block;
+
+    margin-top: 6px;
+
+    color: #6b7280;
+
+    font-size: 12px;
+
+}
+
+</style>
+
 <script>
 
-    // 今日の日付を自動入力
-    document.addEventListener(
-        "DOMContentLoaded",
-        () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-            const dateInput =
-                document.querySelector(
-                    'input[name="purchase_date"]'
-                );
+        /* =========================
+           今日の日付
+        ========================= */
 
-            if (dateInput) {
+        const dateInput =
+            document.querySelector(
+                'input[name="purchase_date"]'
+            );
 
-                dateInput.valueAsDate =
-                    new Date();
+        if (dateInput) {
 
-            }
+            dateInput.valueAsDate =
+                new Date();
 
         }
-    );
+
+
+        /* =========================
+           出版社保存
+        ========================= */
+
+        const publisherInput =
+            document.getElementById(
+                "publisher-input"
+            );
+
+        const publisherList =
+            document.getElementById(
+                "publisher-list"
+            );
+
+        const savedPublishers =
+            JSON.parse(
+                localStorage.getItem(
+                    "publishers"
+                ) || "[]"
+            );
+
+        savedPublishers.forEach(
+            (publisher) => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    publisher;
+
+                publisherList.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+        /* =========================
+           フォーム送信時
+        ========================= */
+
+        const bookForm =
+            document.getElementById(
+                "book-form"
+            );
+
+        bookForm.addEventListener(
+            "submit",
+            (e) => {
+
+                const publisher =
+                    publisherInput.value.trim();
+
+                if (
+                    publisher &&
+                    !savedPublishers.includes(
+                        publisher
+                    )
+                ) {
+
+                    savedPublishers.push(
+                        publisher
+                    );
+
+                    localStorage.setItem(
+                        "publishers",
+                        JSON.stringify(
+                            savedPublishers
+                        )
+                    );
+
+                }
+
+            }
+        );
+
+    }
+);
 
 </script>
 

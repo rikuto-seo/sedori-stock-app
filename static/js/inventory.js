@@ -22,6 +22,14 @@ const saleFeeInput = document.getElementById(
     "sale-fee"
 );
 
+const saleDateInput = document.getElementById(
+    "sale-date"
+);
+
+const saleStatusInput = document.getElementById(
+    "sale-status"
+);
+
 let books = [];
 
 let feeManuallyEdited = false;
@@ -43,7 +51,9 @@ async function initInventory() {
 
         renderBooks(books);
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(error);
 
@@ -77,9 +87,9 @@ function renderBooks(bookList) {
 
     bookList.forEach((book) => {
 
-        // =========================
-        // 利益計算
-        // =========================
+        /* =========================
+           利益計算
+        ========================= */
 
         let profitText = "";
 
@@ -94,7 +104,6 @@ function renderBooks(bookList) {
             const shipping =
                 Number(book.shipping_cost || 0);
 
-            // DBの手数料を優先
             const fee =
                 Number(book.fee || 0);
 
@@ -107,13 +116,13 @@ function renderBooks(bookList) {
 
             const profitClass =
                 profit >= 0
-                ? "profit-plus"
-                : "profit-minus";
+                    ? "profit-plus"
+                    : "profit-minus";
 
             const sign =
                 profit >= 0
-                ? "+"
-                : "";
+                    ? "+"
+                    : "";
 
             profitText = `
                 <div class="
@@ -126,9 +135,9 @@ function renderBooks(bookList) {
 
         }
 
-        // =========================
-        // 行
-        // =========================
+        /* =========================
+           行
+        ========================= */
 
         const row =
             document.createElement("div");
@@ -192,6 +201,7 @@ function renderBooks(bookList) {
 
 }
 
+
 /* =========================
    Cコード自動分類
 ========================= */
@@ -248,7 +258,6 @@ const GENRE_MAP = {
     "23": "伝記",
     "25": "地理",
     "26": "旅行",
-
 
     "30": "社会科学総記",
     "31": "政治含む国防軍事",
@@ -396,18 +405,20 @@ if (targetInput) {
 function parseCCode(cCode) {
 
     if (!cCode) {
+
         return null;
+
     }
 
-    // C除去
     const normalized =
         cCode
             .toUpperCase()
             .replace("C", "");
 
-    // 4桁未満なら無効
     if (normalized.length < 4) {
+
         return null;
+
     }
 
     const targetCode =
@@ -454,10 +465,11 @@ if (cCodeInput) {
                 );
 
             if (!parsed) {
+
                 return;
+
             }
 
-            // 手入力されていない時のみ
             if (
                 !genreManuallyEdited
                 && parsed.genre
@@ -492,6 +504,7 @@ if (cCodeInput) {
     );
 
 }
+
 
 /* =========================
    フィルター
@@ -606,7 +619,6 @@ function closeDetailModal() {
 
 function openSaleModal(book) {
 
-    // 手動変更フラグ初期化
     feeManuallyEdited = false;
 
     document.getElementById(
@@ -617,14 +629,10 @@ function openSaleModal(book) {
         "sale-id"
     ).value = book.id;
 
-    document.getElementById(
-        "sale-price"
-    ).value =
+    salePriceInput.value =
         book.sale_price || "";
 
-    document.getElementById(
-        "sale-fee"
-    ).value =
+    saleFeeInput.value =
         book.fee || "";
 
     document.getElementById(
@@ -632,9 +640,7 @@ function openSaleModal(book) {
     ).value =
         book.shipping_cost || "";
 
-    document.getElementById(
-        "sale-date"
-    ).value =
+    saleDateInput.value =
         book.sale_date || "";
 
     document.getElementById(
@@ -642,10 +648,8 @@ function openSaleModal(book) {
     ).value =
         book.shipping_method || "";
 
-    document.getElementById(
-        "sale-status"
-    ).value =
-        book.status || "未出品";
+    saleStatusInput.value =
+        book.status || "出品中";
 
 }
 
@@ -660,10 +664,9 @@ function closeSaleModal() {
 
 
 /* =========================
-   手数料自動計算
+   手数料手動変更
 ========================= */
 
-// 手動変更されたら固定
 if (saleFeeInput) {
 
     saleFeeInput.addEventListener(
@@ -678,30 +681,60 @@ if (saleFeeInput) {
 }
 
 
-// 販売価格入力時
+/* =========================
+   販売価格入力
+========================= */
+
 if (salePriceInput) {
 
     salePriceInput.addEventListener(
         "input",
         () => {
 
-            // 手動編集後は自動更新しない
-            if (feeManuallyEdited) {
-                return;
-            }
-
             const salePrice =
                 Number(
                     salePriceInput.value || 0
                 );
 
-            // 10%
-            const fee =
-                Math.floor(
-                    salePrice * 0.1
-                );
+            /* =========================
+               手数料自動計算
+            ========================= */
 
-            saleFeeInput.value = fee;
+            if (!feeManuallyEdited) {
+
+                const fee =
+                    Math.floor(
+                        salePrice * 0.1
+                    );
+
+                saleFeeInput.value = fee;
+
+            }
+
+            /* =========================
+               ステータス自動変更
+            ========================= */
+
+            if (salePrice > 0) {
+
+                saleStatusInput.value =
+                    "売却済";
+
+                if (!saleDateInput.value) {
+
+                    saleDateInput.valueAsDate =
+                        new Date();
+
+                }
+
+            }
+
+            else {
+
+                saleStatusInput.value =
+                    "出品中";
+
+            }
 
         }
     );
@@ -826,14 +859,10 @@ if (saleForm) {
             const data = {
 
                 sale_price:
-                    document.getElementById(
-                        "sale-price"
-                    ).value,
+                    salePriceInput.value,
 
                 fee:
-                    document.getElementById(
-                        "sale-fee"
-                    ).value,
+                    saleFeeInput.value,
 
                 shipping_cost:
                     document.getElementById(
@@ -841,9 +870,7 @@ if (saleForm) {
                     ).value,
 
                 sale_date:
-                    document.getElementById(
-                        "sale-date"
-                    ).value,
+                    saleDateInput.value,
 
                 shipping_method:
                     document.getElementById(
@@ -851,9 +878,7 @@ if (saleForm) {
                     ).value,
 
                 status:
-                    document.getElementById(
-                        "sale-status"
-                    ).value
+                    saleStatusInput.value
 
             };
 
@@ -919,6 +944,7 @@ if (searchInput) {
     );
 
 }
+
 
 if (statusFilter) {
 

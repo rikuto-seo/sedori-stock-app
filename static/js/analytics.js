@@ -42,6 +42,11 @@ function renderSummary(data) {
         </div>
 
         <div class="analytics-card">
+            総送料<br>
+            ¥${data.shipping.toLocaleString()}
+        </div>
+
+        <div class="analytics-card">
             経費<br>
             ¥${data.costs.toLocaleString()}
         </div>

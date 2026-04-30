@@ -1,4 +1,5 @@
 from datetime import datetime
+from collections import defaultdict
 
 from flask import Blueprint
 from flask import jsonify
@@ -9,10 +10,16 @@ from extensions.db import db
 from models.book import Book
 from models.cost import Cost
 
-from collections import defaultdict
-
 
 api_bp = Blueprint("api", __name__)
+
+
+# =========================
+# 状態定数
+# =========================
+
+STATUS_LISTING = "出品中"
+STATUS_SOLD = "売却済"
 
 
 # =========================
@@ -51,8 +58,8 @@ def create_book():
 
         publisher=data.get("publisher"),
 
-        purchase_price=data.get(
-            "purchase_price"
+        purchase_price=int(
+            data.get("purchase_price") or 0
         ),
 
         purchase_store=data.get(
@@ -62,7 +69,10 @@ def create_book():
         purchase_date=datetime.strptime(
             data.get("purchase_date"),
             "%Y-%m-%d"
-        )
+        ),
+
+        # 新規登録時は出品中
+        status=STATUS_LISTING
 
     )
 
@@ -150,10 +160,15 @@ def update_sale(book_id):
 
     data = request.json
 
-    # 数値変換
-    book.sale_price = int(
+    # =========================
+    # 数値
+    # =========================
+
+    sale_price = int(
         data.get("sale_price") or 0
     )
+
+    book.sale_price = sale_price
 
     book.fee = int(
         data.get("fee") or 0
@@ -163,7 +178,10 @@ def update_sale(book_id):
         data.get("shipping_cost") or 0
     )
 
-    # 日付
+    # =========================
+    # 販売日
+    # =========================
+
     sale_date = data.get("sale_date")
 
     if sale_date:
@@ -173,15 +191,35 @@ def update_sale(book_id):
             "%Y-%m-%d"
         )
 
-    # その他
+    elif sale_price > 0:
+
+        # 自動で今日の日付
+        book.sale_date = datetime.now()
+
+    else:
+
+        # 販売解除時
+        book.sale_date = None
+
+    # =========================
+    # 配送方法
+    # =========================
+
     book.shipping_method = data.get(
         "shipping_method"
     )
 
-    book.status = data.get(
-        "status",
-        book.status
-    )
+    # =========================
+    # 状態自動判定
+    # =========================
+
+    if sale_price > 0:
+
+        book.status = STATUS_SOLD
+
+    else:
+
+        book.status = STATUS_LISTING
 
     db.session.commit()
 
@@ -189,8 +227,9 @@ def update_sale(book_id):
         "message": "sale updated"
     })
 
+
 # =========================
-# 分析
+# 分析サマリー
 # =========================
 @api_bp.route("/analytics/summary")
 def analytics_summary():
@@ -253,17 +292,21 @@ def analytics_summary():
         "inventory_count":
             len([
                 b for b in books
-                if b.status != "sold"
+                if b.status != STATUS_SOLD
             ]),
 
         "sold_count":
             len([
                 b for b in books
-                if b.status == "sold"
+                if b.status == STATUS_SOLD
             ])
 
     })
 
+
+# =========================
+# 月別分析
+# =========================
 @api_bp.route("/analytics/monthly")
 def analytics_monthly():
 
@@ -282,7 +325,7 @@ def analytics_monthly():
 
         if (
             book.sale_date
-            and book.status == "sold"
+            and book.status == STATUS_SOLD
         ):
 
             month = book.sale_date.strftime(
@@ -369,6 +412,10 @@ def analytics_monthly():
 
     })
 
+
+# =========================
+# ジャンル利益
+# =========================
 @api_bp.route("/analytics/genre-profit")
 def analytics_genre_profit():
 
@@ -378,7 +425,7 @@ def analytics_genre_profit():
 
     for book in books:
 
-        if book.status != "sold":
+        if book.status != STATUS_SOLD:
             continue
 
         genre = (
@@ -421,6 +468,10 @@ def analytics_genre_profit():
 
     })
 
+
+# =========================
+# 在庫状態分析
+# =========================
 @api_bp.route("/analytics/status")
 def analytics_status():
 
@@ -431,10 +482,12 @@ def analytics_status():
 
     for book in books:
 
-        if book.status == "sold":
+        if book.status == STATUS_SOLD:
+
             sold += 1
 
         else:
+
             inventory += 1
 
     return jsonify({
@@ -451,6 +504,10 @@ def analytics_status():
 
     })
 
+
+# =========================
+# 回転率分析
+# =========================
 @api_bp.route("/analytics/rotation")
 def analytics_rotation():
 
@@ -464,7 +521,7 @@ def analytics_rotation():
         if (
             book.purchase_date
             and book.sale_date
-            and book.status == "sold"
+            and book.status == STATUS_SOLD
         ):
 
             days = (
@@ -474,7 +531,7 @@ def analytics_rotation():
             ).days
 
             labels.append(
-                book.title[:20]
+                (book.title or "")[:20]
             )
 
             values.append(days)
@@ -486,6 +543,10 @@ def analytics_rotation():
 
     })
 
+
+# =========================
+# 利益率ランキング
+# =========================
 @api_bp.route("/analytics/profit-ranking")
 def analytics_profit_ranking():
 
@@ -496,7 +557,7 @@ def analytics_profit_ranking():
     for book in books:
 
         if (
-            book.status != "sold"
+            book.status != STATUS_SOLD
             or not book.purchase_price
         ):
             continue
@@ -549,6 +610,7 @@ def analytics_profit_ranking():
 
     return jsonify(ranking)
 
+
 # =========================
 # 経費削除
 # =========================
@@ -570,8 +632,9 @@ def delete_cost(cost_id):
         "message": "deleted"
     })
 
+
 # =========================
-# 削除
+# 本削除
 # =========================
 @api_bp.route(
     "/books/<int:book_id>",
@@ -590,6 +653,9 @@ def delete_book(book_id):
     })
 
 
+# =========================
+# 経費登録
+# =========================
 @api_bp.route("/costs", methods=["POST"])
 def create_cost():
 
@@ -627,6 +693,9 @@ def create_cost():
     })
 
 
+# =========================
+# 経費一覧
+# =========================
 @api_bp.route("/costs", methods=["GET"])
 def get_costs():
 
