@@ -13,37 +13,68 @@
     <!-- フィルター -->
     <div class="filter-container">
 
-        <input type="text" id="search-input" placeholder="タイトル・ISBN検索">
+        <input
+            type="text"
+            id="search-input"
+            placeholder="タイトル・ISBN検索"
+        >
 
         <select id="status-filter">
-            <option value="">すべての状態</option>
-            <option value="出品中">出品中</option>
-            <option value="売却済">売却済</option>
+
+            <option value="">
+                すべての状態
+            </option>
+
+            <option value="出品中">
+                出品中
+            </option>
+
+            <option value="売却済">
+                売却済
+            </option>
+
         </select>
 
     </div>
 
     <!-- 件数 -->
     <div class="inventory-count">
-        <span id="book-count">0</span> 件
+
+        <span id="book-count">
+            0
+        </span>
+
+        件
+
     </div>
 
     <!-- 一覧 -->
-    <div id="inventory-table" class="inventory-table"></div>
+    <div
+        id="inventory-table"
+        class="inventory-table"
+    ></div>
 
 </div>
 
 
-<!-- 詳細モーダル -->
+<!-- =========================
+     詳細モーダル
+========================= -->
 <div id="detail-modal" class="modal">
 
     <div class="modal-content">
 
         <div class="modal-header">
 
-            <h2>詳細編集</h2>
+            <h2>
+                詳細編集
+            </h2>
 
-            <button type="button" class="close-modal" onclick="closeDetailModal()">
+            <button
+                type="button"
+                class="close-modal"
+                onclick="closeDetailModal()"
+            >
                 ✕
             </button>
 
@@ -51,49 +82,116 @@
 
         <form id="detail-form">
 
-            <input type="hidden" id="detail-id">
+            <input
+                type="hidden"
+                id="detail-id"
+            >
 
             <div class="form-group">
-                <label>タイトル</label>
-                <input type="text" id="detail-title">
+
+                <label>
+                    タイトル
+                </label>
+
+                <input
+                    type="text"
+                    id="detail-title"
+                >
+
             </div>
 
             <div class="form-group">
-                <label>ISBN</label>
-                <input type="text" id="detail-isbn">
+
+                <label>
+                    ISBN
+                </label>
+
+                <input
+                    type="text"
+                    id="detail-isbn"
+                >
+
             </div>
 
             <div class="form-group">
-                <label>出版社</label>
-                <input type="text" id="detail-publisher">
+
+                <label>
+                    出版社
+                </label>
+
+                <input
+                    type="text"
+                    id="detail-publisher"
+                >
+
             </div>
 
             <div class="form-group">
-                <label>ジャンル</label>
-                <input type="text" id="detail-genre">
+
+                <label>
+                    ジャンル
+                </label>
+
+                <input
+                    type="text"
+                    id="detail-genre"
+                >
+
             </div>
 
             <div class="form-group">
-                <label>仕入れ値</label>
-                <input type="number" id="detail-purchase-price">
+
+                <label>
+                    仕入れ値
+                </label>
+
+                <input
+                    type="number"
+                    id="detail-purchase-price"
+                >
+
             </div>
 
             <div class="form-group">
-                <label>仕入れ店舗</label>
-                <input type="text" id="detail-purchase-store">
+
+                <label>
+                    仕入れ店舗
+                </label>
+
+                <input
+                    type="text"
+                    id="detail-purchase-store"
+                >
+
             </div>
 
             <div class="form-group">
-                <label>Cコード</label>
-                <input type="text" id="detail-c-code">
+
+                <label>
+                    Cコード
+                </label>
+
+                <input
+                    type="text"
+                    id="detail-c-code"
+                >
+
             </div>
 
             <div class="form-group">
-                <label>メモ</label>
+
+                <label>
+                    メモ
+                </label>
+
                 <textarea id="detail-memo"></textarea>
+
             </div>
 
-            <button type="submit" class="save-button">
+            <button
+                type="submit"
+                class="save-button"
+            >
                 保存
             </button>
 
@@ -104,16 +202,24 @@
 </div>
 
 
-<!-- 販売モーダル -->
+<!-- =========================
+     販売モーダル
+========================= -->
 <div id="sale-modal" class="modal">
 
     <div class="modal-content">
 
         <div class="modal-header">
 
-            <h2>販売入力</h2>
+            <h2>
+                販売入力
+            </h2>
 
-            <button type="button" class="close-modal" onclick="closeSaleModal()">
+            <button
+                type="button"
+                class="close-modal"
+                onclick="closeSaleModal()"
+            >
                 ✕
             </button>
 
@@ -121,63 +227,137 @@
 
         <form id="sale-form">
 
-            <input type="hidden" id="sale-id">
+            <input
+                type="hidden"
+                id="sale-id"
+            >
 
+            <!-- 販売価格 -->
             <div class="form-group">
-                <label>販売価格</label>
-                <input type="number" id="sale-price">
+
+                <label>
+                    販売価格
+                </label>
+
+                <input
+                    type="number"
+                    id="sale-price"
+                    placeholder="0"
+                >
+
             </div>
 
+            <!-- 手数料 -->
             <div class="form-group">
-                <label>手数料</label>
-                <input type="number" id="sale-fee">
+
+                <label>
+                    手数料
+                </label>
+
+                <input
+                    type="number"
+                    id="sale-fee"
+                    placeholder="自動計算"
+                >
+
+                <small class="input-help">
+                    販売価格の10%を自動計算
+                </small>
+
             </div>
 
+            <!-- 配送方法 -->
             <div class="form-group">
-                <label>配送料</label>
-                <input type="number" id="sale-shipping">
-            </div>
 
-            <div class="form-group">
-                <label>販売日</label>
-                <input type="date" id="sale-date">
-            </div>
+                <label>
+                    配送方法
+                </label>
 
-            <div class="form-group">
-                <label>配送方法</label>
-                <div class="form-group">
+                <select id="shipping-method">
 
-                    <label>配送方法</label>
+                    <option value="">
+                        選択してください
+                    </option>
 
-                    <select id="shipping-method">
+                    <option value="らくらくメルカリ便">
+                        らくらくメルカリ便
+                    </option>
 
-                        <option value="">選択してください</option>
+                    <option value="ゆうゆうパケットポストミニ">
+                        ゆうゆうパケットポストミニ
+                    </option>
 
-                        <option value="らくらくメルカリ便">
-                            らくらくメルカリ便
-                        </option>
-
-                        <option value="ゆうゆうパケットポストミニ">
-                            ゆうゆうパケットポストミニ
-                        </option>
-
-                    </select>
-
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>状態</label>
-
-                <select id="sale-status">
-
-                    <option value="出品中">出品中</option>
-                    <option value="売却済">売却済</option>
                 </select>
 
             </div>
 
-            <button type="submit" class="save-button">
+            <!-- 配送料 -->
+            <div class="form-group">
+
+                <label>
+                    配送料
+                </label>
+
+                <input
+                    type="number"
+                    id="sale-shipping"
+                    placeholder="自動入力"
+                >
+
+                <small class="input-help">
+
+                    らくらくメルカリ便:
+                    210円
+
+                    <br>
+
+                    ゆうゆうパケットポストミニ:
+                    160円
+
+                </small>
+
+            </div>
+
+            <!-- 販売日 -->
+            <div class="form-group">
+
+                <label>
+                    販売日
+                </label>
+
+                <input
+                    type="date"
+                    id="sale-date"
+                >
+
+            </div>
+
+            <!-- 状態 -->
+            <div class="form-group">
+
+                <label>
+                    状態
+                </label>
+
+                <select id="sale-status">
+
+                    <option value="出品中">
+                        出品中
+                    </option>
+
+                    <option value="売却済">
+                        売却済
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- 保存 -->
+            <button
+                type="submit"
+                class="save-button"
+            >
                 保存
             </button>
 
