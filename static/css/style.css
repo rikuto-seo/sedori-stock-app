@@ -655,6 +655,60 @@ body {
 
 }
 
+   .input-prefix-group {
+
+        display: flex;
+        align-items: center;
+
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+
+        overflow: hidden;
+
+        background: white;
+
+    }
+
+    .input-prefix {
+
+        padding: 12px 14px;
+
+        background: #f3f4f6;
+
+        color: #6b7280;
+
+        font-weight: bold;
+
+        border-right: 1px solid #d1d5db;
+
+    }
+
+    .input-prefix-group input {
+
+        flex: 1;
+
+        border: none;
+
+        padding: 12px;
+
+        font-size: 16px;
+
+        outline: none;
+
+    }
+
+    .input-help {
+
+        display: block;
+
+        margin-top: 6px;
+
+        color: #6b7280;
+
+        font-size: 12px;
+
+    }
+    
 /* =========================
    アニメーション
 ========================= */
