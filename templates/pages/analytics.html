@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}
+分析
+{% endblock %}
+
+{% block content %}
+
+<div class="purchase-page">
+
+    <h1 class="page-title">
+        分析
+    </h1>
+
+    <div class="analytics-grid" id="summary-cards">
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+            月別推移
+        </div>
+
+        <canvas id="monthlyChart"></canvas>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+            ジャンル別利益
+        </div>
+
+        <canvas id="genreProfitChart"></canvas>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+            在庫状態
+        </div>
+
+        <canvas id="statusChart"></canvas>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+            回転日数
+        </div>
+
+        <canvas id="rotationChart"></canvas>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+            利益率ランキング
+        </div>
+
+        <div id="profit-ranking">
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/analytics.js"></script>
+
+{% endblock %}

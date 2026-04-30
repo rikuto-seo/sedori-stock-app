@@ -1,0 +1,694 @@
+body {
+    margin: 0;
+    padding: 0;
+
+    background: #f3f4f6;
+
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    color: #111827;
+}
+
+
+/* =========================
+   レイアウト
+========================= */
+
+.main-content {
+    padding: 16px;
+    padding-bottom: 120px;
+}
+
+.purchase-page,
+.inventory-page {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+
+/* =========================
+   タイトル
+========================= */
+
+.page-title {
+    font-size: 28px;
+    font-weight: 800;
+
+    margin-bottom: 18px;
+
+    letter-spacing: -0.02em;
+}
+
+
+/* =========================
+   カード
+========================= */
+
+.card,
+.inventory-row {
+    background: white;
+
+    border-radius: 22px;
+
+    padding: 18px;
+
+    margin-bottom: 14px;
+
+    box-shadow:
+        0 4px 14px rgba(0,0,0,0.05);
+
+    border: 1px solid #ececec;
+}
+
+.card-header {
+    font-size: 18px;
+    font-weight: 700;
+
+    margin-bottom: 18px;
+}
+
+
+/* =========================
+   入力
+========================= */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+
+    margin-bottom: 7px;
+
+    color: #6b7280;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    min-height: 50px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 14px;
+
+    padding: 0 14px;
+
+    font-size: 16px;
+
+    background: #fafafa;
+
+    box-sizing: border-box;
+
+    transition: 0.15s;
+}
+
+.form-group textarea {
+    min-height: 120px;
+
+    padding-top: 12px;
+
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+
+    border-color: #111827;
+
+    background: white;
+}
+
+
+/* =========================
+   重要入力
+========================= */
+
+.important-label {
+    font-size: 16px !important;
+    font-weight: 700;
+}
+
+.important-input {
+    min-height: 60px !important;
+
+    font-size: 24px !important;
+    font-weight: 700;
+
+    background: #fff;
+}
+
+
+/* =========================
+   スキャンボタン
+========================= */
+
+.scan-button {
+    width: 100%;
+
+    border: none;
+    border-radius: 18px;
+
+    padding: 18px;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    margin-bottom: 16px;
+
+    background: #111827;
+    color: white;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+}
+
+.scan-button:active {
+    transform: scale(0.98);
+}
+
+
+/* =========================
+   登録ボタン
+========================= */
+
+.submit-container {
+    position: fixed;
+
+    left: 0;
+    bottom: 70px;
+
+    width: 100%;
+
+    padding: 12px 16px;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(243,244,246,1),
+            rgba(243,244,246,0.8)
+        );
+
+    box-sizing: border-box;
+
+    backdrop-filter: blur(10px);
+}
+
+.submit-button,
+.save-button {
+    width: 100%;
+
+    min-height: 56px;
+
+    border: none;
+    border-radius: 16px;
+
+    background: #111827;
+    color: white;
+
+    font-size: 17px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+}
+
+.submit-button:active,
+.save-button:active {
+    transform: scale(0.98);
+}
+
+
+/* =========================
+   最近追加
+========================= */
+
+.recent-item {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+
+/* =========================
+   スキャナー
+========================= */
+
+.scanner-container {
+    display: none;
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0,0,0,0.94);
+
+    z-index: 9999;
+
+    padding: 16px;
+
+    box-sizing: border-box;
+}
+
+#reader {
+    width: 100%;
+
+    max-width: 520px;
+
+    margin: 40px auto;
+}
+
+.close-scanner {
+    width: 100%;
+
+    min-height: 52px;
+
+    border: none;
+    border-radius: 14px;
+
+    background: white;
+
+    font-size: 16px;
+    font-weight: 700;
+}
+
+
+/* =========================
+   フィルター
+========================= */
+
+.filter-container {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+
+    margin-bottom: 18px;
+}
+
+.filter-container input,
+.filter-container select {
+    min-height: 50px;
+
+    border: 1px solid #d1d5db;
+    border-radius: 14px;
+
+    padding: 0 14px;
+
+    font-size: 16px;
+
+    background: white;
+}
+
+
+/* =========================
+   件数
+========================= */
+
+.inventory-count {
+    margin-bottom: 12px;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    color: #6b7280;
+}
+
+
+/* =========================
+   一覧
+========================= */
+
+.inventory-table {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+/* =========================
+   在庫行
+========================= */
+
+.inventory-row {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 12px;
+
+    background: white;
+
+    border-radius: 18px;
+
+    padding: 14px 16px;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.05);
+
+    border: 1px solid #ececec;
+}
+
+
+/* 左側 */
+.inventory-main {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    min-width: 0;
+
+    flex: 1;
+}
+
+/* =========================
+   タイトル＋利益を横並び
+========================= */
+
+.inventory-title-area {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    min-width: 0;
+
+    flex: 1;
+}
+
+
+/* タイトル */
+.inventory-title {
+    font-size: 15px;
+    font-weight: 700;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    min-width: 0;
+}
+
+
+/* 利益 */
+.inventory-profit {
+    flex-shrink: 0;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+.profit-plus {
+    color: #16a34a;
+}
+
+.profit-minus {
+    color: #dc2626;
+}
+
+/* =========================
+   状態
+========================= */
+
+.status-badge {
+    padding: 5px 10px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    flex-shrink: 0;
+}
+
+.status-未出品 {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.status-出品中 {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-売却済 {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+/* =========================
+   ボタン群
+========================= */
+
+.inventory-actions {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    flex-shrink: 0;
+}
+
+
+/* 共通ボタン */
+.inventory-actions button {
+    min-height: 32px;
+
+    padding: 0 10px;
+
+    border: none;
+    border-radius: 10px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+
+    white-space: nowrap;
+}
+
+.inventory-actions button:active {
+    transform: scale(0.96);
+}
+
+
+/* 個別 */
+.detail-button {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.sale-button {
+    background: #111827;
+    color: white;
+}
+
+.delete-button {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+
+/* スマホ最適化 */
+@media (max-width: 480px) {
+
+    .inventory-row {
+        padding: 12px;
+    }
+
+    .inventory-title {
+        font-size: 14px;
+    }
+
+    .inventory-actions button {
+        padding: 0 8px;
+
+        font-size: 11px;
+
+        min-height: 30px;
+    }
+
+}
+
+/* =========================
+   モーダル
+========================= */
+
+.modal {
+    display: none;
+
+    position: fixed;
+
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0,0,0,0.45);
+
+    z-index: 99999;
+
+    justify-content: center;
+    align-items: flex-end;
+
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    width: 100%;
+
+    max-width: 760px;
+
+    background: white;
+
+    border-radius: 28px 28px 0 0;
+
+    padding: 22px;
+
+    max-height: 92vh;
+
+    overflow-y: auto;
+
+    box-sizing: border-box;
+
+    animation: slideUp 0.18s ease;
+}
+
+
+/* =========================
+   モーダルヘッダー
+========================= */
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 18px;
+}
+
+.modal-header h2 {
+    margin: 0;
+
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.close-modal {
+    border: none;
+
+    width: 38px;
+    height: 38px;
+
+    border-radius: 999px;
+
+    background: #f3f4f6;
+
+    font-size: 16px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.analytics-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(220px, 1fr));
+
+    gap: 16px;
+
+    margin-top: 20px;
+
+}
+
+.analytics-card {
+
+    background: white;
+
+    border-radius: 14px;
+
+    padding: 20px;
+
+    box-shadow:
+        0 2px 10px rgba(0,0,0,0.08);
+
+}
+
+.analytics-label {
+
+    color: #666;
+
+    margin-bottom: 10px;
+
+}
+
+.analytics-value {
+
+    font-size: 28px;
+
+    font-weight: bold;
+
+}
+
+/* =========================
+   アニメーション
+========================= */
+
+@keyframes slideUp {
+
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+}
+
+
+/* =========================
+   PC
+========================= */
+
+@media (min-width: 768px) {
+
+    .inventory-row {
+        flex-direction: row;
+
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .inventory-actions {
+        width: 320px;
+    }
+
+}

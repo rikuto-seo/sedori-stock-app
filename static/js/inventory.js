@@ -1,0 +1,937 @@
+const inventoryTable = document.getElementById(
+    "inventory-table"
+);
+
+const searchInput = document.getElementById(
+    "search-input"
+);
+
+const statusFilter = document.getElementById(
+    "status-filter"
+);
+
+const bookCount = document.getElementById(
+    "book-count"
+);
+
+const salePriceInput = document.getElementById(
+    "sale-price"
+);
+
+const saleFeeInput = document.getElementById(
+    "sale-fee"
+);
+
+let books = [];
+
+let feeManuallyEdited = false;
+
+
+/* =========================
+   初期化
+========================= */
+
+async function initInventory() {
+
+    try {
+
+        const response = await fetch(
+            "/api/books"
+        );
+
+        books = await response.json();
+
+        renderBooks(books);
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+/* =========================
+   描画
+========================= */
+
+function renderBooks(bookList) {
+
+    inventoryTable.innerHTML = "";
+
+    bookCount.textContent =
+        bookList.length;
+
+    if (bookList.length === 0) {
+
+        inventoryTable.innerHTML = `
+            <div class="inventory-row">
+                データがありません
+            </div>
+        `;
+
+        return;
+
+    }
+
+    bookList.forEach((book) => {
+
+        // =========================
+        // 利益計算
+        // =========================
+
+        let profitText = "";
+
+        if (book.sale_price) {
+
+            const salePrice =
+                Number(book.sale_price || 0);
+
+            const purchasePrice =
+                Number(book.purchase_price || 0);
+
+            const shipping =
+                Number(book.shipping_cost || 0);
+
+            // DBの手数料を優先
+            const fee =
+                Number(book.fee || 0);
+
+            const profit =
+                salePrice - (
+                    fee
+                    + purchasePrice
+                    + shipping
+                );
+
+            const profitClass =
+                profit >= 0
+                ? "profit-plus"
+                : "profit-minus";
+
+            const sign =
+                profit >= 0
+                ? "+"
+                : "";
+
+            profitText = `
+                <div class="
+                    inventory-profit
+                    ${profitClass}
+                ">
+                    ${sign}¥${profit.toLocaleString()}
+                </div>
+            `;
+
+        }
+
+        // =========================
+        // 行
+        // =========================
+
+        const row =
+            document.createElement("div");
+
+        row.className =
+            "inventory-row";
+
+        row.innerHTML = `
+
+            <div class="inventory-main">
+
+                <div class="
+                    status-badge
+                    status-${book.status}
+                ">
+                    ${book.status}
+                </div>
+
+                <div class="inventory-title-area">
+
+                    <div class="inventory-title">
+                        ${book.title}
+                    </div>
+
+                    ${profitText}
+
+                </div>
+
+            </div>
+
+            <div class="inventory-actions">
+
+                <button
+                    class="detail-button"
+                    onclick='openDetailModal(${JSON.stringify(book)})'
+                >
+                    詳細
+                </button>
+
+                <button
+                    class="sale-button"
+                    onclick='openSaleModal(${JSON.stringify(book)})'
+                >
+                    販売
+                </button>
+
+                <button
+                    class="delete-button"
+                    onclick="deleteBook(${book.id})"
+                >
+                    削除
+                </button>
+
+            </div>
+
+        `;
+
+        inventoryTable.appendChild(row);
+
+    });
+
+}
+
+/* =========================
+   Cコード自動分類
+========================= */
+
+const TARGET_MAP = {
+
+    "0": "一般",
+    "1": "教養",
+    "2": "実用",
+    "3": "専門",
+    "4": "検定",
+    "5": "婦人",
+    "6": "学参I(小中)",
+    "7": "学参II(高校)",
+    "8": "児童",
+    "9": "雑誌扱い"
+
+};
+
+
+const FORMAT_MAP = {
+
+    "0": "単行本",
+    "1": "文庫",
+    "2": "新書",
+    "3": "全集・双書",
+    "4": "ムック・その他",
+    "5": "事・辞典",
+    "6": "図鑑",
+    "7": "絵本",
+    "8": "磁性媒体など",
+    "9": "コミック"
+
+};
+
+
+const GENRE_MAP = {
+
+    "00": "総記",
+    "01": "百科事典",
+    "02": "年鑑・雑誌",
+    "04": "情報科学",
+    "10": "哲学",
+
+    "11": "心理学",
+    "12": "倫理学",
+    "14": "宗教",
+    "15": "仏学",
+    "16": "キリスト教",
+
+    "20": "歴史総記",
+    "21": "日本歴史",
+    "22": "外国歴史",
+    "23": "伝記",
+    "25": "地理",
+    "26": "旅行",
+
+
+    "30": "社会科学総記",
+    "31": "政治含む国防軍事",
+    "32": "法律",
+    "33": "経済・財政・統計",
+    "34": "経営",
+    "36": "社会",
+    "37": "教育",
+    "39": "民族・風習",
+
+    "40": "自然科学総記",
+    "41": "数学",
+    "42": "物理",
+    "43": "化学",
+    "44": "天文・地学",
+    "45": "生物学",
+    "47": "医学・歯学・薬学",
+
+    "50": "工学・工学総記",
+    "51": "土木",
+    "52": "建築",
+    "53": "機械",
+    "54": "電気",
+    "55": "電子通信",
+    "56": "海事",
+    "57": "採鉱・冶金",
+    "58": "その他の工業",
+
+    "60": "産業総記",
+    "61": "農林業",
+    "62": "水産業",
+    "63": "産業",
+    "65": "交通・通信",
+
+    "70": "芸術総記",
+    "71": "絵画・彫刻",
+    "72": "写真・工芸",
+    "73": "音楽・舞踊",
+    "74": "演劇・映画",
+    "75": "体育",
+    "76": "諸芸・娯楽",
+    "77": "家事",
+    "79": "コミックス・劇画",
+
+    "80": "語学総記",
+    "81": "日本語",
+    "82": "英米語",
+    "84": "ドイツ語",
+    "85": "フランス語",
+    "87": "各国語",
+
+    "90": "文学総記",
+    "91": "日本文学総記",
+    "92": "日本文学詩歌",
+    "93": "日本文学、小説・物語",
+    "95": "文学、評論、随筆、その他",
+    "97": "外国文学小説",
+    "98": "外国文学、その他"
+
+};
+
+
+/* =========================
+   要素取得
+========================= */
+
+const cCodeInput = document.getElementById(
+    "c-code-input"
+);
+
+const genreInput = document.getElementById(
+    "genre-input"
+);
+
+const formatInput = document.getElementById(
+    "format-input"
+);
+
+const targetInput = document.getElementById(
+    "target-input"
+);
+
+
+/* =========================
+   手動編集フラグ
+========================= */
+
+let genreManuallyEdited = false;
+
+let formatManuallyEdited = false;
+
+let targetManuallyEdited = false;
+
+
+/* =========================
+   手動入力監視
+========================= */
+
+if (genreInput) {
+
+    genreInput.addEventListener(
+        "input",
+        () => {
+
+            genreManuallyEdited = true;
+
+        }
+    );
+
+}
+
+
+if (formatInput) {
+
+    formatInput.addEventListener(
+        "input",
+        () => {
+
+            formatManuallyEdited = true;
+
+        }
+    );
+
+}
+
+
+if (targetInput) {
+
+    targetInput.addEventListener(
+        "input",
+        () => {
+
+            targetManuallyEdited = true;
+
+        }
+    );
+
+}
+
+
+/* =========================
+   Cコード解析
+========================= */
+
+function parseCCode(cCode) {
+
+    if (!cCode) {
+        return null;
+    }
+
+    // C除去
+    const normalized =
+        cCode
+            .toUpperCase()
+            .replace("C", "");
+
+    // 4桁未満なら無効
+    if (normalized.length < 4) {
+        return null;
+    }
+
+    const targetCode =
+        normalized[0];
+
+    const formatCode =
+        normalized[1];
+
+    const genreCode =
+        normalized.slice(2, 4);
+
+    return {
+
+        target:
+            TARGET_MAP[targetCode]
+            || "",
+
+        book_format:
+            FORMAT_MAP[formatCode]
+            || "",
+
+        genre:
+            GENRE_MAP[genreCode]
+            || ""
+
+    };
+
+}
+
+
+/* =========================
+   自動入力
+========================= */
+
+if (cCodeInput) {
+
+    cCodeInput.addEventListener(
+        "input",
+        () => {
+
+            const parsed =
+                parseCCode(
+                    cCodeInput.value
+                );
+
+            if (!parsed) {
+                return;
+            }
+
+            // 手入力されていない時のみ
+            if (
+                !genreManuallyEdited
+                && parsed.genre
+            ) {
+
+                genreInput.value =
+                    parsed.genre;
+
+            }
+
+            if (
+                !formatManuallyEdited
+                && parsed.book_format
+            ) {
+
+                formatInput.value =
+                    parsed.book_format;
+
+            }
+
+            if (
+                !targetManuallyEdited
+                && parsed.target
+            ) {
+
+                targetInput.value =
+                    parsed.target;
+
+            }
+
+        }
+    );
+
+}
+
+/* =========================
+   フィルター
+========================= */
+
+function filterBooks() {
+
+    const search =
+        searchInput.value.toLowerCase();
+
+    const status =
+        statusFilter.value;
+
+    const filtered = books.filter(
+        (book) => {
+
+            const matchesSearch =
+
+                (book.title || "")
+                    .toLowerCase()
+                    .includes(search)
+
+                ||
+
+                (book.isbn || "")
+                    .includes(search);
+
+            const matchesStatus =
+
+                !status
+
+                ||
+
+                book.status === status;
+
+            return (
+                matchesSearch
+                && matchesStatus
+            );
+
+        }
+    );
+
+    renderBooks(filtered);
+
+}
+
+
+/* =========================
+   詳細モーダル
+========================= */
+
+function openDetailModal(book) {
+
+    document.getElementById(
+        "detail-modal"
+    ).style.display = "flex";
+
+    document.getElementById(
+        "detail-id"
+    ).value = book.id;
+
+    document.getElementById(
+        "detail-title"
+    ).value = book.title || "";
+
+    document.getElementById(
+        "detail-isbn"
+    ).value = book.isbn || "";
+
+    document.getElementById(
+        "detail-publisher"
+    ).value = book.publisher || "";
+
+    document.getElementById(
+        "detail-genre"
+    ).value = book.genre || "";
+
+    document.getElementById(
+        "detail-purchase-price"
+    ).value =
+        book.purchase_price || "";
+
+    document.getElementById(
+        "detail-purchase-store"
+    ).value =
+        book.purchase_store || "";
+
+    document.getElementById(
+        "detail-c-code"
+    ).value = book.c_code || "";
+
+    document.getElementById(
+        "detail-memo"
+    ).value = book.memo || "";
+
+}
+
+
+function closeDetailModal() {
+
+    document.getElementById(
+        "detail-modal"
+    ).style.display = "none";
+
+}
+
+
+/* =========================
+   販売モーダル
+========================= */
+
+function openSaleModal(book) {
+
+    // 手動変更フラグ初期化
+    feeManuallyEdited = false;
+
+    document.getElementById(
+        "sale-modal"
+    ).style.display = "flex";
+
+    document.getElementById(
+        "sale-id"
+    ).value = book.id;
+
+    document.getElementById(
+        "sale-price"
+    ).value =
+        book.sale_price || "";
+
+    document.getElementById(
+        "sale-fee"
+    ).value =
+        book.fee || "";
+
+    document.getElementById(
+        "sale-shipping"
+    ).value =
+        book.shipping_cost || "";
+
+    document.getElementById(
+        "sale-date"
+    ).value =
+        book.sale_date || "";
+
+    document.getElementById(
+        "shipping-method"
+    ).value =
+        book.shipping_method || "";
+
+    document.getElementById(
+        "sale-status"
+    ).value =
+        book.status || "未出品";
+
+}
+
+
+function closeSaleModal() {
+
+    document.getElementById(
+        "sale-modal"
+    ).style.display = "none";
+
+}
+
+
+/* =========================
+   手数料自動計算
+========================= */
+
+// 手動変更されたら固定
+if (saleFeeInput) {
+
+    saleFeeInput.addEventListener(
+        "input",
+        () => {
+
+            feeManuallyEdited = true;
+
+        }
+    );
+
+}
+
+
+// 販売価格入力時
+if (salePriceInput) {
+
+    salePriceInput.addEventListener(
+        "input",
+        () => {
+
+            // 手動編集後は自動更新しない
+            if (feeManuallyEdited) {
+                return;
+            }
+
+            const salePrice =
+                Number(
+                    salePriceInput.value || 0
+                );
+
+            // 10%
+            const fee =
+                Math.floor(
+                    salePrice * 0.1
+                );
+
+            saleFeeInput.value = fee;
+
+        }
+    );
+
+}
+
+
+/* =========================
+   詳細保存
+========================= */
+
+const detailForm =
+    document.getElementById(
+        "detail-form"
+    );
+
+if (detailForm) {
+
+    detailForm.addEventListener(
+        "submit",
+        async (e) => {
+
+            e.preventDefault();
+
+            const id =
+                document.getElementById(
+                    "detail-id"
+                ).value;
+
+            const data = {
+
+                title:
+                    document.getElementById(
+                        "detail-title"
+                    ).value,
+
+                isbn:
+                    document.getElementById(
+                        "detail-isbn"
+                    ).value,
+
+                publisher:
+                    document.getElementById(
+                        "detail-publisher"
+                    ).value,
+
+                genre:
+                    document.getElementById(
+                        "detail-genre"
+                    ).value,
+
+                purchase_price:
+                    document.getElementById(
+                        "detail-purchase-price"
+                    ).value,
+
+                purchase_store:
+                    document.getElementById(
+                        "detail-purchase-store"
+                    ).value,
+
+                c_code:
+                    document.getElementById(
+                        "detail-c-code"
+                    ).value,
+
+                memo:
+                    document.getElementById(
+                        "detail-memo"
+                    ).value
+
+            };
+
+            await fetch(
+                `/api/books/${id}`,
+                {
+
+                    method: "PUT",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify(data)
+
+                }
+            );
+
+            closeDetailModal();
+
+            initInventory();
+
+        }
+    );
+
+}
+
+
+/* =========================
+   販売保存
+========================= */
+
+const saleForm =
+    document.getElementById(
+        "sale-form"
+    );
+
+if (saleForm) {
+
+    saleForm.addEventListener(
+        "submit",
+        async (e) => {
+
+            e.preventDefault();
+
+            const id =
+                document.getElementById(
+                    "sale-id"
+                ).value;
+
+            const data = {
+
+                sale_price:
+                    document.getElementById(
+                        "sale-price"
+                    ).value,
+
+                fee:
+                    document.getElementById(
+                        "sale-fee"
+                    ).value,
+
+                shipping_cost:
+                    document.getElementById(
+                        "sale-shipping"
+                    ).value,
+
+                sale_date:
+                    document.getElementById(
+                        "sale-date"
+                    ).value,
+
+                shipping_method:
+                    document.getElementById(
+                        "shipping-method"
+                    ).value,
+
+                status:
+                    document.getElementById(
+                        "sale-status"
+                    ).value
+
+            };
+
+            await fetch(
+                `/api/books/${id}/sale`,
+                {
+
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify(data)
+
+                }
+            );
+
+            closeSaleModal();
+
+            initInventory();
+
+        }
+    );
+
+}
+
+
+/* =========================
+   削除
+========================= */
+
+async function deleteBook(id) {
+
+    const confirmed = confirm(
+        "本当に削除しますか？"
+    );
+
+    if (!confirmed) return;
+
+    await fetch(
+        `/api/books/${id}`,
+        {
+            method: "DELETE"
+        }
+    );
+
+    initInventory();
+
+}
+
+
+/* =========================
+   イベント
+========================= */
+
+if (searchInput) {
+
+    searchInput.addEventListener(
+        "input",
+        filterBooks
+    );
+
+}
+
+if (statusFilter) {
+
+    statusFilter.addEventListener(
+        "change",
+        filterBooks
+    );
+
+}
+
+
+/* =========================
+   起動
+========================= */
+
+initInventory();

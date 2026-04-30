@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}新規仕入れ{% endblock %}
+
+{% block content %}
+
+<div class="purchase-page">
+
+    <!-- スキャンボタン -->
+    <button type="button" class="scan-button">
+        📷 バーコードをスキャン
+    </button>
+
+    <!-- スキャナー -->
+    <div id="scanner-container" class="scanner-container">
+
+        <div id="reader"></div>
+
+        <button
+            type="button"
+            id="close-scanner"
+            class="close-scanner"
+        >
+            閉じる
+        </button>
+
+    </div>
+
+    <form id="book-form">
+
+        <!-- 商品情報 -->
+        <div class="card">
+
+            <div class="card-header">
+                商品情報
+            </div>
+
+            <!-- ISBN -->
+            <div class="form-group">
+
+                <label>ISBN</label>
+
+                <input
+                    type="text"
+                    name="isbn"
+                    placeholder="978..."
+                    inputmode="numeric"
+                >
+
+            </div>
+
+            <!-- タイトル -->
+            <div class="form-group">
+
+                <label>タイトル</label>
+
+                <input
+                    type="text"
+                    name="title"
+                    placeholder="タイトルを入力"
+                    required
+                >
+
+            </div>
+
+            <!-- Cコード -->
+            <div class="form-group">
+
+                <label>
+                    Cコード
+                </label>
+
+                <input
+                    type="text"
+                    name="c_code"
+                    id="c-code-input"
+                    placeholder="C0077"
+                    maxlength="5"
+                >
+
+                <small class="input-help">
+                    入力すると販売対象・形態・ジャンルを自動入力
+                </small>
+
+            </div>
+
+            <!-- 出版社 -->
+            <div class="form-group">
+
+                <label>出版社</label>
+
+                <input
+                    type="text"
+                    name="publisher"
+                    placeholder="出版社"
+                >
+
+            </div>
+
+            <!-- ジャンル -->
+            <div class="form-group">
+
+                <label>
+                    ジャンル
+                </label>
+
+                <input
+                    type="text"
+                    name="genre"
+                    id="genre-input"
+                    placeholder="自動入力"
+                >
+
+            </div>
+
+            <!-- 形態 -->
+            <div class="form-group">
+
+                <label>
+                    形態
+                </label>
+
+                <input
+                    type="text"
+                    name="book_format"
+                    id="format-input"
+                    placeholder="自動入力"
+                >
+
+            </div>
+
+            <!-- 販売対象 -->
+            <div class="form-group">
+
+                <label>
+                    販売対象
+                </label>
+
+                <input
+                    type="text"
+                    name="target"
+                    id="target-input"
+                    placeholder="自動入力"
+                >
+
+            </div>
+
+        </div>
+
+        <!-- 仕入れ情報 -->
+        <div class="card">
+
+            <div class="card-header">
+                仕入れ情報
+            </div>
+
+            <!-- 仕入れ値 -->
+            <div class="form-group">
+
+                <label class="important-label">
+                    仕入れ値
+                </label>
+
+                <input
+                    type="number"
+                    name="purchase_price"
+                    class="important-input"
+                    placeholder="0"
+                    required
+                >
+
+            </div>
+
+            <!-- 仕入れ店舗 -->
+            <div class="form-group">
+
+                <label>
+                    仕入れ店舗
+                </label>
+
+                <input
+                    type="text"
+                    name="purchase_store"
+                    list="store-list"
+                    placeholder="BOOKOFF大宮"
+                >
+
+                <datalist id="store-list">
+
+                    <option value="BOOKOFF">
+                    <option value="BOOKOFF SUPER BAZAAR">
+                    <option value="駿河屋">
+                    <option value="TSUTAYA">
+                    <option value="古本市場">
+                    <option value="ブックマーケット">
+
+                </datalist>
+
+            </div>
+
+            <!-- 仕入れ日 -->
+            <div class="form-group">
+
+                <label>
+                    仕入れ日
+                </label>
+
+                <input
+                    type="date"
+                    name="purchase_date"
+                    required
+                >
+
+            </div>
+
+        </div>
+
+        <!-- 下固定登録ボタン -->
+        <div class="submit-container">
+
+            <button
+                type="submit"
+                class="submit-button"
+            >
+                登録する
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+<script>
+
+    // 今日の日付を自動入力
+    document.addEventListener(
+        "DOMContentLoaded",
+        () => {
+
+            const dateInput =
+                document.querySelector(
+                    'input[name="purchase_date"]'
+                );
+
+            if (dateInput) {
+
+                dateInput.valueAsDate =
+                    new Date();
+
+            }
+
+        }
+    );
+
+</script>
+
+{% endblock %}

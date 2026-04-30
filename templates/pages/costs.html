@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+
+{% block title %}
+経費管理
+{% endblock %}
+
+{% block content %}
+
+<div class="purchase-page">
+
+    <h1 class="page-title">
+        経費管理
+    </h1>
+
+    <!-- 経費登録 -->
+    <div class="card">
+
+        <div class="card-header">
+            経費登録
+        </div>
+
+        <form id="cost-form">
+
+            <!-- 種別 -->
+            <div class="form-group">
+
+                <label>
+                    種別
+                </label>
+
+                <select name="cost_type" id="cost-type">
+
+                    <option value="packaging">
+                        梱包材
+                    </option>
+
+                    <option value="coupon">
+                        クーポン
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- 梱包材 -->
+            <div class="form-group" id="material-group">
+
+                <label>
+                    梱包材
+                </label>
+
+                <select name="name">
+
+                    <option value="OPP">
+                        OPP
+                    </option>
+
+                    <option value="封筒A4">
+                        封筒A4
+                    </option>
+
+                    <option value="封筒B6">
+                        封筒B6
+                    </option>
+
+                    <option value="ゆうゆう専用封筒">
+                        ゆうゆう専用封筒
+                    </option>
+
+                    <option value="プチプチ">
+                        プチプチ
+                    </option>
+
+                    <option value="マスキングテープ">
+                        マスキングテープ
+                    </option>
+
+                    <option value="箱">
+                        箱
+                    </option>
+
+                    <option value="その他">
+                        その他
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- クーポン名 -->
+            <div class="form-group" id="coupon-group" style="display:none;">
+
+                <label>
+                    クーポン名
+                </label>
+
+                <input type="text" name="coupon_name" placeholder="GWクーポン">
+
+            </div>
+
+            <!-- 単価 -->
+            <div class="form-group">
+
+                <label>
+                    単価
+                </label>
+
+                <input type="number" id="unit-price" placeholder="10" required>
+
+            </div>
+
+            <!-- 個数 -->
+            <div class="form-group">
+
+                <label>
+                    個数
+                </label>
+
+                <input type="number" id="quantity" placeholder="100" value="1" required>
+
+            </div>
+
+            <!-- 合計 -->
+            <div class="form-group">
+
+                <label>
+                    合計金額
+                </label>
+
+                <input type="number" name="amount" id="total-amount" readonly>
+
+            </div>
+
+            <!-- 日付 -->
+            <div class="form-group">
+
+                <label>
+                    日付
+                </label>
+
+                <input type="date" name="cost_date" required>
+
+            </div>
+
+            <!-- メモ -->
+            <div class="form-group">
+
+                <label>
+                    メモ
+                </label>
+
+                <textarea name="memo"></textarea>
+
+            </div>
+
+            <button type="submit" class="submit-button">
+                登録
+            </button>
+
+        </form>
+
+    </div>
+
+    <!-- 一覧 -->
+    <div class="card">
+
+        <div class="card-header">
+            登録済み経費
+        </div>
+
+        <div id="cost-list">
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+    const costForm =
+        document.getElementById(
+            "cost-form"
+        );
+
+    const costList =
+        document.getElementById(
+            "cost-list"
+        );
+
+    const costType =
+        document.getElementById(
+            "cost-type"
+        );
+
+    const materialGroup =
+        document.getElementById(
+            "material-group"
+        );
+
+    const couponGroup =
+        document.getElementById(
+            "coupon-group"
+        );
+
+    const unitPriceInput =
+        document.getElementById(
+            "unit-price"
+        );
+
+    const quantityInput =
+        document.getElementById(
+            "quantity"
+        );
+
+    const totalAmountInput =
+        document.getElementById(
+            "total-amount"
+        );
+
+
+    /* =========================
+       今日の日付
+    ========================= */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        () => {
+
+            const dateInput =
+                document.querySelector(
+                    'input[name="cost_date"]'
+                );
+
+            if (dateInput) {
+
+                dateInput.valueAsDate =
+                    new Date();
+
+            }
+
+            loadCosts();
+
+        }
+    );
+
+
+    /* =========================
+       種別切替
+    ========================= */
+
+    costType.addEventListener(
+        "change",
+        () => {
+
+            if (
+                costType.value
+                === "coupon"
+            ) {
+
+                materialGroup.style.display =
+                    "none";
+
+                couponGroup.style.display =
+                    "flex";
+
+            }
+
+            else {
+
+                materialGroup.style.display =
+                    "flex";
+
+                couponGroup.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    /* =========================
+       合計自動計算
+    ========================= */
+
+    function calculateTotal() {
+
+        const unitPrice =
+            Number(
+                unitPriceInput.value || 0
+            );
+
+        const quantity =
+            Number(
+                quantityInput.value || 0
+            );
+
+        totalAmountInput.value =
+            unitPrice * quantity;
+
+    }
+
+    unitPriceInput.addEventListener(
+        "input",
+        calculateTotal
+    );
+
+    quantityInput.addEventListener(
+        "input",
+        calculateTotal
+    );
+
+
+    /* =========================
+       登録
+    ========================= */
+
+    costForm.addEventListener(
+        "submit",
+        async (e) => {
+
+            e.preventDefault();
+
+            const formData =
+                new FormData(costForm);
+
+            const data = {
+
+                cost_type:
+                    formData.get(
+                        "cost_type"
+                    ),
+
+                name:
+                    costType.value === "coupon"
+                        ? formData.get(
+                            "coupon_name"
+                        )
+                        : formData.get(
+                            "name"
+                        ),
+
+                amount:
+                    Number(
+                        formData.get(
+                            "amount"
+                        )
+                    ),
+
+                quantity:
+                    Number(
+                        quantityInput.value
+                    ),
+
+                unit_price:
+                    Number(
+                        unitPriceInput.value
+                    ),
+
+                cost_date:
+                    formData.get(
+                        "cost_date"
+                    ),
+
+                memo:
+                    formData.get(
+                        "memo"
+                    )
+
+            };
+
+            await fetch(
+                "/api/costs",
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(data)
+
+                }
+            );
+
+            costForm.reset();
+
+            document.querySelector(
+                'input[name="cost_date"]'
+            ).valueAsDate =
+                new Date();
+
+            totalAmountInput.value = "";
+
+            loadCosts();
+
+        }
+    );
+
+
+    /* =========================
+       一覧取得
+    ========================= */
+
+    async function loadCosts() {
+
+        const response =
+            await fetch("/api/costs");
+
+        const costs =
+            await response.json();
+
+        renderCosts(costs);
+
+    }
+
+
+    /* =========================
+       描画
+    ========================= */
+
+    function renderCosts(costs) {
+
+        costList.innerHTML = "";
+
+        if (costs.length === 0) {
+
+            costList.innerHTML = `
+            <div class="recent-item">
+                データがありません
+            </div>
+        `;
+
+            return;
+
+        }
+
+        costs.forEach((cost) => {
+
+            const item =
+                document.createElement("div");
+
+            item.className =
+                "inventory-row";
+
+            item.innerHTML = `
+
+                <div class="inventory-main">
+
+                    <div class="
+                        status-badge
+                        status-${cost.cost_type === "coupon"
+                                ? "売却済"
+                                : "出品中"
+                            }
+                    ">
+
+                        ${cost.cost_type === "coupon"
+                                ? "クーポン"
+                                : "梱包材"
+                            }
+
+                    </div>
+
+                    <div class="inventory-title-area">
+
+                        <div class="inventory-title">
+                            ${cost.name}
+                        </div>
+
+                        <div class="recent-item">
+
+                            ¥${Number(
+                                cost.unit_price || 0
+                            ).toLocaleString()}
+                            ×
+                            ${cost.quantity || 1}
+
+                            =
+                            ¥${Number(
+                                cost.amount
+                            ).toLocaleString()}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="inventory-actions">
+
+                    <div class="recent-item">
+                        ${cost.cost_date || ""}
+                    </div>
+
+                    <button
+                        class="delete-button"
+                        onclick="deleteCost(${cost.id})"
+                    >
+                        削除
+                    </button>
+
+                </div>
+
+            `;
+
+            costList.appendChild(item);
+
+        });
+}
+
+    /* =========================
+    経費削除
+    ========================= */
+
+    async function deleteCost(id) {
+
+        const confirmed = confirm(
+            "この経費を削除しますか？"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        await fetch(
+            `/api/costs/${id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+        loadCosts();
+
+    }
+
+</script>
+
+{% endblock %}

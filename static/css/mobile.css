@@ -1,0 +1,20 @@
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    display: flex;
+    justify-content: space-around;
+
+    background: white;
+    border-top: 1px solid #ddd;
+
+    padding: 12px 0;
+}
+
+.bottom-nav a {
+    text-decoration: none;
+    color: black;
+    font-weight: bold;
+}
