@@ -49,6 +49,19 @@ function renderSummary(data) {
         <div class="analytics-card">
             経費<br>
             ¥${data.costs.toLocaleString()}
+            
+        </div>
+
+                <div class="analytics-card">
+
+            <div class="analytics-label">
+                利益率
+            </div>
+
+            <div class="analytics-value">
+                ${data.profit_rate}%
+            </div>
+
         </div>
 
         <div class="analytics-card">

@@ -373,6 +373,27 @@ def analytics_summary():
         - total_costs
     )
 
+    # =========================
+    # 利益率
+    # =========================
+
+    if total_sales > 0:
+
+        profit_rate = round(
+
+            (
+                profit
+                / total_sales
+            ) * 100,
+
+            1
+
+        )
+
+    else:
+
+        profit_rate = 0
+
     return jsonify({
 
         "purchase": total_purchase,
@@ -384,6 +405,8 @@ def analytics_summary():
         "shipping": total_shipping,
 
         "costs": total_costs,
+
+        "profit_rate": profit_rate,
 
         "profit": profit,
 
