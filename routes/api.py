@@ -627,10 +627,19 @@ def analytics_rotation():
             and book.sale.sale_date
         ):
 
+            sale_date = book.sale.sale_date
+
+            purchase_date = book.purchase_date
+
+            # datetime → dateへ統一
+            if hasattr(sale_date, "date"):
+
+                sale_date = sale_date.date()
+
             days = (
-                book.sale.sale_date
+                sale_date
                 -
-                book.purchase_date
+                purchase_date
             ).days
 
             if days >= 0:
