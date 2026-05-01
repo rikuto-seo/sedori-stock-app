@@ -15,7 +15,8 @@
     <div class="analytics-grid" id="summary-cards">
     </div>
 
-    <div class="card">
+    <!-- 月別推移 -->
+    <div class="card chart-large">
 
         <div class="card-header">
             月別推移
@@ -25,7 +26,8 @@
 
     </div>
 
-    <div class="card">
+    <!-- ジャンル別利益 -->
+    <div class="card chart-large">
 
         <div class="card-header">
             ジャンル別利益
@@ -35,7 +37,8 @@
 
     </div>
 
-    <div class="card">
+    <!-- 在庫状態（小さめ） -->
+    <div class="card chart-small">
 
         <div class="card-header">
             在庫状態
@@ -45,17 +48,20 @@
 
     </div>
 
-    <div class="card">
+    <!-- 回転日数統計 -->
+    <div class="card chart-wide">
 
         <div class="card-header">
             回転日数
         </div>
 
-        <canvas id="rotationChart"></canvas>
+        <div id="rotation-stats" class="rotation-stats">
+        </div>
 
     </div>
 
-    <div class="card">
+    <!-- 利益率ランキング -->
+    <div class="card chart-large">
 
         <div class="card-header">
             利益率ランキング

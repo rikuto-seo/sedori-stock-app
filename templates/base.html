@@ -23,6 +23,61 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- =========================
+     トップへ戻る
+========================= -->
+    <button id="scroll-top-button" class="scroll-top-button" onclick="scrollToTop()">
+        ↑
+    </button>
+
+    <script>
+
+        function scrollToTop() {
+
+            window.scrollTo({
+
+                top: 0,
+
+                behavior: "smooth"
+
+            });
+
+        }
+
+        /* =========================
+           表示制御
+        ========================= */
+
+        const scrollTopButton =
+            document.getElementById(
+                "scroll-top-button"
+            );
+
+        window.addEventListener(
+            "scroll",
+            () => {
+
+                if (window.scrollY > 300) {
+
+                    scrollTopButton.classList.add(
+                        "show"
+                    );
+
+                }
+
+                else {
+
+                    scrollTopButton.classList.remove(
+                        "show"
+                    );
+
+                }
+
+            }
+        );
+
+    </script>
+
     <script src="{{ url_for('static', filename='js/form.js') }}"></script>
     <script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
     <script src="{{ url_for('static', filename='js/inventory.js') }}"></script>

@@ -247,7 +247,7 @@ async function loadStatusChart() {
 
 }
 
-async function loadRotationChart() {
+async function loadRotationStats() {
 
     const response =
         await fetch(
@@ -257,36 +257,72 @@ async function loadRotationChart() {
     const data =
         await response.json();
 
-    new Chart(
+    renderRotationStats(data);
 
+}
+
+function renderRotationStats(data) {
+
+    const container =
         document.getElementById(
-            "rotationChart"
-        ),
+            "rotation-stats"
+        );
 
-        {
+    container.innerHTML = `
 
-            type: "bar",
+        <div class="rotation-grid">
 
-            data: {
+            <div class="analytics-card">
 
-                labels:
-                    data.labels,
+                <div class="analytics-label">
+                    平均
+                </div>
 
-                datasets: [
-                    {
-                        label:
-                            "日数",
+                <div class="analytics-value">
+                    ${data.average}日
+                </div>
 
-                        data:
-                            data.values
-                    }
-                ]
+            </div>
 
-            }
+            <div class="analytics-card">
 
-        }
+                <div class="analytics-label">
+                    最短
+                </div>
 
-    );
+                <div class="analytics-value">
+                    ${data.min}日
+                </div>
+
+            </div>
+
+            <div class="analytics-card">
+
+                <div class="analytics-label">
+                    最長
+                </div>
+
+                <div class="analytics-value">
+                    ${data.max}日
+                </div>
+
+            </div>
+
+            <div class="analytics-card">
+
+                <div class="analytics-label">
+                    中央値
+                </div>
+
+                <div class="analytics-value">
+                    ${data.median}日
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
 
 }
 
@@ -346,7 +382,7 @@ document.addEventListener(
 
         loadStatusChart();
 
-        loadRotationChart();
+        loadRotationStats();
 
         loadProfitRanking();
 

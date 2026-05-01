@@ -5,6 +5,8 @@ from flask import Blueprint
 from flask import jsonify
 from flask import request
 
+from sqlalchemy.orm import joinedload
+
 from extensions.db import db
 
 from models.book import Book
@@ -24,14 +26,41 @@ STATUS_SOLD = "売却済"
 
 
 # =========================
+# 共通関数
+# =========================
+
+
+def parse_date(date_str):
+
+    if not date_str:
+        return None
+
+    try:
+
+        return datetime.strptime(
+            date_str,
+            "%Y-%m-%d"
+        ).date()
+
+    except:
+
+        return None
+
+
+# =========================
 # 一覧取得
 # =========================
+
+
 @api_bp.route("/books", methods=["GET"])
 def get_books():
 
-    books = Book.query.order_by(
-        Book.created_at.desc()
-    ).all()
+    books = (
+        Book.query
+        .options(joinedload(Book.sale))
+        .order_by(Book.created_at.desc())
+        .all()
+    )
 
     return jsonify([
         book.to_dict()
@@ -42,19 +71,12 @@ def get_books():
 # =========================
 # 新規登録
 # =========================
+
+
 @api_bp.route("/books", methods=["POST"])
 def create_book():
 
     data = request.json
-
-    purchase_date = None
-
-    if data.get("purchase_date"):
-
-        purchase_date = datetime.strptime(
-            data.get("purchase_date"),
-            "%Y-%m-%d"
-        ).date()
 
     book = Book(
 
@@ -80,7 +102,9 @@ def create_book():
             "purchase_store"
         ),
 
-        purchase_date=purchase_date,
+        purchase_date=parse_date(
+            data.get("purchase_date")
+        ),
 
         status=STATUS_LISTING,
 
@@ -100,6 +124,8 @@ def create_book():
 # =========================
 # 編集
 # =========================
+
+
 @api_bp.route(
     "/books/<int:book_id>",
     methods=["PUT"]
@@ -172,6 +198,8 @@ def update_book(book_id):
 # =========================
 # 単品販売更新
 # =========================
+
+
 @api_bp.route(
     "/books/<int:book_id>/sale",
     methods=["PATCH"]
@@ -198,11 +226,9 @@ def update_sale(book_id):
         "shipping_method"
     )
 
-    sale_date = data.get("sale_date")
-
-    # =========================
-    # Sale作成
-    # =========================
+    sale_date = parse_date(
+        data.get("sale_date")
+    )
 
     if sale_price > 0:
 
@@ -210,19 +236,10 @@ def update_sale(book_id):
             sale_price=sale_price,
             fee=fee,
             shipping_cost=shipping_cost,
-            shipping_method=shipping_method
+            shipping_method=shipping_method,
+            sale_date=sale_date or datetime.now().date(),
+            status=STATUS_SOLD
         )
-
-        if sale_date:
-
-            sale.sale_date = datetime.strptime(
-                sale_date,
-                "%Y-%m-%d"
-            ).date()
-
-        else:
-
-            sale.sale_date = datetime.now().date()
 
         db.session.add(sale)
 
@@ -246,6 +263,8 @@ def update_sale(book_id):
 # =========================
 # セット販売
 # =========================
+
+
 @api_bp.route(
     "/sales/group",
     methods=["POST"]
@@ -278,22 +297,15 @@ def create_group_sale():
 
         shipping_method=data.get(
             "shipping_method"
-        )
+        ),
+
+        sale_date=parse_date(
+            data.get("sale_date")
+        ) or datetime.now().date(),
+
+        status=STATUS_SOLD
 
     )
-
-    sale_date = data.get("sale_date")
-
-    if sale_date:
-
-        sale.sale_date = datetime.strptime(
-            sale_date,
-            "%Y-%m-%d"
-        ).date()
-
-    else:
-
-        sale.sale_date = datetime.now().date()
 
     db.session.add(sale)
 
@@ -319,11 +331,14 @@ def create_group_sale():
 # =========================
 # 分析サマリー
 # =========================
+
+
 @api_bp.route("/analytics/summary")
 def analytics_summary():
 
     books = Book.query.all()
     sales = Sale.query.all()
+    costs = Cost.query.all()
 
     total_purchase = sum(
         b.purchase_price or 0
@@ -347,7 +362,7 @@ def analytics_summary():
 
     total_costs = sum(
         c.amount or 0
-        for c in Cost.query.all()
+        for c in costs
     )
 
     profit = (
@@ -388,10 +403,17 @@ def analytics_summary():
 # =========================
 # 月別分析
 # =========================
+
+
 @api_bp.route("/analytics/monthly")
 def analytics_monthly():
 
-    sales = Sale.query.all()
+    sales = (
+        Sale.query
+        .options(joinedload(Sale.books))
+        .all()
+    )
+
     costs = Cost.query.all()
 
     monthly_sales = defaultdict(int)
@@ -407,13 +429,9 @@ def analytics_monthly():
             "%Y-%m"
         )
 
-        books = Book.query.filter_by(
-            sale_id=sale.id
-        ).all()
-
         purchase_total = sum(
             b.purchase_price or 0
-            for b in books
+            for b in sale.books
         )
 
         sale_price = sale.sale_price or 0
@@ -431,6 +449,9 @@ def analytics_monthly():
         monthly_profit[month] += profit
 
     for cost in costs:
+
+        if not cost.cost_date:
+            continue
 
         month = cost.cost_date.strftime(
             "%Y-%m"
@@ -475,12 +496,17 @@ def analytics_monthly():
 # =========================
 # ジャンル利益
 # =========================
+
+
 @api_bp.route("/analytics/genre-profit")
 def analytics_genre_profit():
 
-    books = Book.query.filter_by(
-        status=STATUS_SOLD
-    ).all()
+    books = (
+        Book.query
+        .options(joinedload(Book.sale))
+        .filter_by(status=STATUS_SOLD)
+        .all()
+    )
 
     genre_profit = defaultdict(int)
 
@@ -493,17 +519,22 @@ def analytics_genre_profit():
 
         sale = book.sale
 
+        book_count = len(sale.books)
+
+        if book_count <= 0:
+            continue
+
         profit = (
-            (sale.sale_price or 0)
+            ((sale.sale_price or 0) / book_count)
             -
-            (sale.fee or 0)
+            ((sale.fee or 0) / book_count)
             -
-            (sale.shipping_cost or 0)
+            ((sale.shipping_cost or 0) / book_count)
             -
             (book.purchase_price or 0)
         )
 
-        genre_profit[genre] += profit
+        genre_profit[genre] += round(profit)
 
     return jsonify({
 
@@ -521,6 +552,8 @@ def analytics_genre_profit():
 # =========================
 # 在庫状態分析
 # =========================
+
+
 @api_bp.route("/analytics/status")
 def analytics_status():
 
@@ -552,7 +585,7 @@ def analytics_status():
 
 
 # =========================
-# 回転率分析
+# 回転日数統計
 # =========================
 @api_bp.route("/analytics/rotation")
 def analytics_rotation():
@@ -561,8 +594,7 @@ def analytics_rotation():
         status=STATUS_SOLD
     ).all()
 
-    labels = []
-    values = []
+    rotation_days = []
 
     for book in books:
 
@@ -578,29 +610,83 @@ def analytics_rotation():
                 book.purchase_date
             ).days
 
-            labels.append(
-                (book.title or "")[:20]
-            )
+            if days >= 0:
+                rotation_days.append(days)
 
-            values.append(days)
+    if not rotation_days:
+
+        return jsonify({
+
+            "average": 0,
+            "max": 0,
+            "min": 0,
+            "median": 0
+
+        })
+
+    rotation_days.sort()
+
+    count = len(rotation_days)
+
+    average_days = round(
+        sum(rotation_days) / count,
+        1
+    )
+
+    max_days = max(rotation_days)
+
+    min_days = min(rotation_days)
+
+    # =========================
+    # 中央値
+    # =========================
+
+    middle = count // 2
+
+    if count % 2 == 0:
+
+        median_days = round(
+
+            (
+                rotation_days[middle - 1]
+                +
+                rotation_days[middle]
+            ) / 2,
+
+            1
+
+        )
+
+    else:
+
+        median_days = rotation_days[middle]
 
     return jsonify({
 
-        "labels": labels,
-        "values": values
+        "average": average_days,
+
+        "max": max_days,
+
+        "min": min_days,
+
+        "median": median_days
 
     })
-
 
 # =========================
 # 利益率ランキング
 # =========================
+
+
 @api_bp.route("/analytics/profit-ranking")
 def analytics_profit_ranking():
 
-    books = Book.query.filter_by(
-        status=STATUS_SOLD
-    ).all()
+    books = (
+        Book.query
+        .options(joinedload(Book.sale))
+        .filter_by(status=STATUS_SOLD)
+        .all()
+    )
 
     ranking = []
 
@@ -614,12 +700,17 @@ def analytics_profit_ranking():
 
         sale = book.sale
 
+        book_count = len(sale.books)
+
+        if book_count <= 0:
+            continue
+
         profit = (
-            (sale.sale_price or 0)
+            ((sale.sale_price or 0) / book_count)
             -
-            (sale.fee or 0)
+            ((sale.fee or 0) / book_count)
             -
-            (sale.shipping_cost or 0)
+            ((sale.shipping_cost or 0) / book_count)
             -
             (book.purchase_price or 0)
         )
@@ -635,7 +726,7 @@ def analytics_profit_ranking():
 
             "rate": round(rate, 1),
 
-            "profit": profit
+            "profit": round(profit)
 
         })
 
@@ -651,6 +742,8 @@ def analytics_profit_ranking():
 # =========================
 # 経費削除
 # =========================
+
+
 @api_bp.route(
     "/costs/<int:cost_id>",
     methods=["DELETE"]
@@ -673,6 +766,8 @@ def delete_cost(cost_id):
 # =========================
 # 本削除
 # =========================
+
+
 @api_bp.route(
     "/books/<int:book_id>",
     methods=["DELETE"]
@@ -693,6 +788,8 @@ def delete_book(book_id):
 # =========================
 # 経費登録
 # =========================
+
+
 @api_bp.route("/costs", methods=["POST"])
 def create_cost():
 
@@ -714,10 +811,9 @@ def create_cost():
 
         memo=data.get("memo"),
 
-        cost_date=datetime.strptime(
-            data.get("cost_date"),
-            "%Y-%m-%d"
-        ).date()
+        cost_date=parse_date(
+            data.get("cost_date")
+        )
 
     )
 
@@ -733,6 +829,8 @@ def create_cost():
 # =========================
 # 経費一覧
 # =========================
+
+
 @api_bp.route("/costs", methods=["GET"])
 def get_costs():
 

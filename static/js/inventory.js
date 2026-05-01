@@ -42,7 +42,7 @@ let books = [];
 
 let feeManuallyEdited = false;
 let shippingManuallyEdited = false;
-
+let selectedBooks = [];
 
 /* =========================
    初期化
@@ -70,12 +70,141 @@ async function initInventory() {
 
 }
 
+function toggleBookSelection(bookId) {
+
+    if (selectedBooks.includes(bookId)) {
+
+        selectedBooks =
+            selectedBooks.filter(
+                id => id !== bookId
+            );
+
+    } else {
+
+        selectedBooks.push(bookId);
+
+    }
+
+    renderBooks();
+
+}
+
+function openGroupSaleModal() {
+
+    if (selectedBooks.length === 0) {
+
+        alert("本を選択してください");
+
+        return;
+
+    }
+
+    document.getElementById(
+        "group-sale-modal"
+    ).style.display = "flex";
+
+    document.getElementById(
+        "selected-books"
+    ).innerHTML = `
+
+        <div class="inventory-count">
+
+            ${selectedBooks.length}冊選択中
+
+        </div>
+
+    `;
+
+}
+
+
+function closeGroupSaleModal() {
+
+    document.getElementById(
+        "group-sale-modal"
+    ).style.display = "none";
+
+}
+
+async function submitGroupSale(e) {
+
+    e.preventDefault();
+
+    const payload = {
+
+        book_ids: selectedBooks,
+
+        sale_price:
+            document.getElementById(
+                "group-sale-price"
+            ).value,
+
+        fee:
+            document.getElementById(
+                "group-sale-fee"
+            ).value,
+
+        shipping_cost:
+            document.getElementById(
+                "group-sale-shipping"
+            ).value,
+
+        shipping_method:
+            document.getElementById(
+                "group-shipping-method"
+            ).value,
+
+        sale_date:
+            document.getElementById(
+                "group-sale-date"
+            ).value
+
+    };
+
+    const response = await fetch(
+
+        "/api/sales/group",
+
+        {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+
+            body: JSON.stringify(
+                payload
+            )
+
+        }
+
+    );
+
+    if (!response.ok) {
+
+        alert("セット販売失敗");
+
+        return;
+
+    }
+
+    alert("セット販売完了");
+
+    selectedBooks = [];
+
+    closeGroupSaleModal();
+
+    initInventory();
+
+}
 
 /* =========================
    描画
 ========================= */
 
-function renderBooks(bookList) {
+function renderBooks(bookList = books) {
 
     inventoryTable.innerHTML = "";
 
@@ -96,10 +225,6 @@ function renderBooks(bookList) {
 
     bookList.forEach((book) => {
 
-        /* =========================
-           利益計算
-        ========================= */
-
         let profitText = "";
 
         if (book.sale_price) {
@@ -117,11 +242,10 @@ function renderBooks(bookList) {
                 Number(book.fee || 0);
 
             const profit =
-                salePrice - (
-                    fee
-                    + purchasePrice
-                    + shipping
-                );
+                salePrice
+                - fee
+                - purchasePrice
+                - shipping;
 
             const profitClass =
                 profit >= 0
@@ -141,12 +265,12 @@ function renderBooks(bookList) {
                     ${sign}¥${profit.toLocaleString()}
                 </div>
             `;
-
         }
 
-        /* =========================
-           行
-        ========================= */
+        const checked =
+            selectedBooks.includes(book.id)
+                ? "checked"
+                : "";
 
         const row =
             document.createElement("div");
@@ -157,6 +281,13 @@ function renderBooks(bookList) {
         row.innerHTML = `
 
             <div class="inventory-main">
+
+                <input
+                    type="checkbox"
+                    class="group-checkbox"
+                    ${checked}
+                    onchange="toggleBookSelection(${book.id})"
+                >
 
                 <div class="
                     status-badge

@@ -1,16 +1,35 @@
 {% extends 'base.html' %}
 
-{% block title %}在庫一覧{% endblock %}
+{% block title %}
+在庫一覧
+{% endblock %}
 
 {% block content %}
 
 <div class="inventory-page">
 
-    <h1 class="page-title">
-        在庫一覧
-    </h1>
+    <!-- =========================
+         ヘッダー
+    ========================= -->
+    <div class="page-header">
 
-    <!-- フィルター -->
+        <h1 class="page-title">
+            在庫一覧
+        </h1>
+
+        <button
+            type="button"
+            class="group-sale-button"
+            onclick="openGroupSaleModal()"
+        >
+            セット販売
+        </button>
+
+    </div>
+
+    <!-- =========================
+         フィルター
+    ========================= -->
     <div class="filter-container">
 
         <input
@@ -37,7 +56,9 @@
 
     </div>
 
-    <!-- 件数 -->
+    <!-- =========================
+         件数
+    ========================= -->
     <div class="inventory-count">
 
         <span id="book-count">
@@ -48,7 +69,9 @@
 
     </div>
 
-    <!-- 一覧 -->
+    <!-- =========================
+         一覧
+    ========================= -->
     <div
         id="inventory-table"
         class="inventory-table"
@@ -203,7 +226,7 @@
 
 
 <!-- =========================
-     販売モーダル
+     単品販売モーダル
 ========================= -->
 <div id="sale-modal" class="modal">
 
@@ -232,7 +255,6 @@
                 id="sale-id"
             >
 
-            <!-- 販売価格 -->
             <div class="form-group">
 
                 <label>
@@ -247,7 +269,6 @@
 
             </div>
 
-            <!-- 手数料 -->
             <div class="form-group">
 
                 <label>
@@ -266,7 +287,6 @@
 
             </div>
 
-            <!-- 配送方法 -->
             <div class="form-group">
 
                 <label>
@@ -291,7 +311,6 @@
 
             </div>
 
-            <!-- 配送料 -->
             <div class="form-group">
 
                 <label>
@@ -304,21 +323,8 @@
                     placeholder="自動入力"
                 >
 
-                <small class="input-help">
-
-                    らくらくメルカリ便:
-                    210円
-
-                    <br>
-
-                    ゆうゆうパケットポストミニ:
-                    160円
-
-                </small>
-
             </div>
 
-            <!-- 販売日 -->
             <div class="form-group">
 
                 <label>
@@ -332,7 +338,6 @@
 
             </div>
 
-            <!-- 状態 -->
             <div class="form-group">
 
                 <label>
@@ -353,7 +358,6 @@
 
             </div>
 
-            <!-- 保存 -->
             <button
                 type="submit"
                 class="save-button"
@@ -366,5 +370,149 @@
     </div>
 
 </div>
+
+
+<!-- =========================
+     セット販売モーダル
+========================= -->
+<div id="group-sale-modal" class="modal">
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h2>
+                セット販売
+            </h2>
+
+            <button
+                type="button"
+                class="close-modal"
+                onclick="closeGroupSaleModal()"
+            >
+                ✕
+            </button>
+
+        </div>
+
+        <form
+            id="group-sale-form"
+            onsubmit="submitGroupSale(event)"
+        >
+
+            <!-- 選択冊数 -->
+            <div class="form-group">
+
+                <label>
+                    選択冊数
+                </label>
+
+                <div
+                    id="selected-books"
+                    class="selected-book-count"
+                >
+                    0冊選択中
+                </div>
+
+            </div>
+
+            <!-- 販売価格 -->
+            <div class="form-group">
+
+                <label>
+                    販売価格
+                </label>
+
+                <input
+                    type="number"
+                    id="group-sale-price"
+                    required
+                >
+
+            </div>
+
+            <!-- 手数料 -->
+            <div class="form-group">
+
+                <label>
+                    手数料
+                </label>
+
+                <input
+                    type="number"
+                    id="group-sale-fee"
+                    value="0"
+                >
+
+            </div>
+
+            <!-- 配送料 -->
+            <div class="form-group">
+
+                <label>
+                    配送料
+                </label>
+
+                <input
+                    type="number"
+                    id="group-sale-shipping"
+                    value="0"
+                >
+
+            </div>
+
+            <!-- 配送方法 -->
+            <div class="form-group">
+
+                <label>
+                    配送方法
+                </label>
+
+                <select id="group-shipping-method">
+
+                    <option value="">
+                        選択してください
+                    </option>
+
+                    <option value="らくらくメルカリ便">
+                        らくらくメルカリ便
+                    </option>
+
+                    <option value="ゆうゆうパケットポストミニ">
+                        ゆうゆうパケットポストミニ
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- 販売日 -->
+            <div class="form-group">
+
+                <label>
+                    販売日
+                </label>
+
+                <input
+                    type="date"
+                    id="group-sale-date"
+                >
+
+            </div>
+
+            <button
+                type="submit"
+                class="save-button"
+            >
+                セット販売登録
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script src="/static/js/inventory.js"></script>
 
 {% endblock %}
