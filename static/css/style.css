@@ -894,6 +894,56 @@ body {
 
 }
 
+.cost-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 120px 140px 140px 80px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.cost-type {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    text-align: center;
+    color: white;
+}
+
+.cost-type.coupon {
+    background: #e74c3c;
+}
+
+.cost-type.material {
+    background: #3498db;
+}
+
+.cost-name {
+    font-weight: bold;
+}
+
+.cost-amount {
+    text-align: right;
+    font-weight: bold;
+}
+
+.cost-detail {
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+}
+
+.cost-date {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+}
+
+.cost-actions {
+    text-align: center;
+}
+
 /* =========================
    アニメーション
 ========================= */
