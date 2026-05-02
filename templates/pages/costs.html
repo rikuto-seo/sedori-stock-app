@@ -327,47 +327,25 @@
 
             const data = {
 
-                cost_type:
-                    formData.get(
-                        "cost_type"
-                    ),
+                cost_type: formData.get("cost_type"),
 
                 name:
                     costType.value === "coupon"
-                        ? formData.get(
-                            "coupon_name"
-                        )
-                        : formData.get(
-                            "name"
-                        ),
+                        ? formData.get("coupon_name")
+                        : formData.get("name"),
 
                 amount:
-                    Number(
-                        formData.get(
-                            "amount"
-                        )
-                    ),
+                    costType.value === "coupon"
+                        ? -Number(formData.get("amount")) // ← ここ重要
+                        : Number(formData.get("amount")),
 
-                quantity:
-                    Number(
-                        quantityInput.value
-                    ),
+                quantity: Number(quantityInput.value),
 
-                unit_price:
-                    Number(
-                        unitPriceInput.value
-                    ),
+                unit_price: Number(unitPriceInput.value),
 
-                cost_date:
-                    formData.get(
-                        "cost_date"
-                    ),
+                cost_date: formData.get("cost_date"),
 
-                memo:
-                    formData.get(
-                        "memo"
-                    )
-
+                memo: formData.get("memo")
             };
 
             await fetch(
@@ -430,88 +408,59 @@
         if (costs.length === 0) {
 
             costList.innerHTML = `
-            <div class="recent-item">
-                データがありません
-            </div>
-        `;
-
+                <div class="recent-item">
+                    データがありません
+                </div>
+            `;
             return;
-
         }
 
         costs.forEach((cost) => {
 
-            const item =
-                document.createElement("div");
+            const item = document.createElement("div");
+            item.className = "cost-row";
 
-            item.className =
-                "inventory-row";
+            const isCoupon = cost.cost_type === "coupon";
+
+            const amount = Math.abs(Number(cost.amount));
+            const unit = Number(cost.unit_price || 0);
+            const qty = cost.quantity || 1;
 
             item.innerHTML = `
 
-                <div class="inventory-main">
-
-                    <div class="
-                        status-badge
-                        status-${cost.cost_type === "coupon"
-                                ? "売却済"
-                                : "出品中"
-                            }
-                    ">
-
-                        ${cost.cost_type === "coupon"
-                                ? "クーポン"
-                                : "梱包材"
-                            }
-
-                    </div>
-
-                    <div class="inventory-title-area">
-
-                        <div class="inventory-title">
-                            ${cost.name}
-                        </div>
-
-                        <div class="recent-item">
-
-                            ¥${Number(
-                                cost.unit_price || 0
-                            ).toLocaleString()}
-                            ×
-                            ${cost.quantity || 1}
-
-                            =
-                            ¥${Number(
-                                cost.amount
-                            ).toLocaleString()}
-
-                        </div>
-
-                    </div>
-
+                <div class="cost-type ${isCoupon ? "coupon" : "material"}">
+                    ${isCoupon ? "クーポン" : "梱包材"}
                 </div>
 
-                <div class="inventory-actions">
+                <div class="cost-name">
+                    ${cost.name}
+                </div>
 
-                    <div class="recent-item">
-                        ${cost.cost_date || ""}
-                    </div>
+                <div class="cost-amount">
+                    ${isCoupon ? "-" : ""}¥${amount.toLocaleString()}
+                </div>
 
+                <div class="cost-detail">
+                    (¥${unit.toLocaleString()} × ${qty})
+                </div>
+
+                <div class="cost-date">
+                    ${cost.cost_date || ""}
+                </div>
+
+                <div class="cost-actions">
                     <button
                         class="delete-button"
                         onclick="deleteCost(${cost.id})"
                     >
                         削除
                     </button>
-
                 </div>
-
             `;
 
             costList.appendChild(item);
-
         });
-}
+    }
 
     /* =========================
     経費削除
