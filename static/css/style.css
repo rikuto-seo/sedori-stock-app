@@ -894,54 +894,73 @@ body {
 
 }
 
+/* =========================
+   PC（そのまま）
+========================= */
+
 .cost-row {
     display: grid;
-    grid-template-columns: 100px 1fr 120px 140px 140px 80px;
+    grid-template-columns: 90px 1fr 100px 110px 110px 70px;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 10px;
     border-bottom: 1px solid #eee;
 }
 
-.cost-type {
-    font-size: 12px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    text-align: center;
-    color: white;
-}
 
-.cost-type.coupon {
-    background: #e74c3c;
-}
+/* =========================
+   スマホ
+========================= */
 
-.cost-type.material {
-    background: #3498db;
-}
+@media (max-width: 480px) {
 
-.cost-name {
-    font-weight: bold;
-}
+    .cost-row {
+        display: grid;
 
-.cost-amount {
-    text-align: right;
-    font-weight: bold;
-}
+        /* 2段構成 */
+        grid-template-columns: 1fr auto;
 
-.cost-detail {
-    font-size: 12px;
-    color: #666;
-    text-align: right;
-}
+        grid-template-areas:
+            "type name"
+            "detail amount"
+            "date actions";
 
-.cost-date {
-    font-size: 12px;
-    color: #888;
-    text-align: center;
-}
+        gap: 6px;
 
-.cost-actions {
-    text-align: center;
+        padding: 12px;
+    }
+
+    .cost-type {
+        grid-area: type;
+        justify-self: start;
+    }
+
+    .cost-name {
+        grid-area: name;
+        text-align: right;
+    }
+
+    .cost-detail {
+        grid-area: detail;
+        text-align: left;
+    }
+
+    .cost-amount {
+        grid-area: amount;
+        text-align: right;
+        font-size: 16px;
+    }
+
+    .cost-date {
+        grid-area: date;
+        font-size: 11px;
+        text-align: left;
+    }
+
+    .cost-actions {
+        grid-area: actions;
+        text-align: right;
+    }
 }
 
 /* =========================
