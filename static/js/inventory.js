@@ -208,8 +208,7 @@ function renderBooks(bookList = books) {
 
     inventoryTable.innerHTML = "";
 
-    bookCount.textContent =
-        bookList.length;
+    bookCount.textContent = bookList.length;
 
     if (bookList.length === 0) {
 
@@ -218,51 +217,31 @@ function renderBooks(bookList = books) {
                 データがありません
             </div>
         `;
-
         return;
-
     }
 
     bookList.forEach((book) => {
 
-        let profitText = "";
+        let profitHTML = "";
 
-        if (book.sale_price) {
+        const salePrice = Number(book.sale_price || 0);
+        const purchasePrice = Number(book.purchase_price || 0);
+        const shipping = Number(book.shipping_cost || 0);
+        const fee = Number(book.fee || 0);
 
-            const salePrice =
-                Number(book.sale_price || 0);
-
-            const purchasePrice =
-                Number(book.purchase_price || 0);
-
-            const shipping =
-                Number(book.shipping_cost || 0);
-
-            const fee =
-                Number(book.fee || 0);
+        if (salePrice > 0) {
 
             const profit =
-                salePrice
-                - fee
-                - purchasePrice
-                - shipping;
+                salePrice - fee - purchasePrice - shipping;
 
             const profitClass =
-                profit >= 0
-                    ? "profit-plus"
-                    : "profit-minus";
+                profit >= 0 ? "profit-plus" : "profit-minus";
 
-            const sign =
-                profit >= 0
-                    ? "+"
-                    : "";
+            const sign = profit >= 0 ? "+" : "-";
 
-            profitText = `
-                <div class="
-                    inventory-profit
-                    ${profitClass}
-                ">
-                    ${sign}¥${profit.toLocaleString()}
+            profitHTML = `
+                <div class="inventory-profit ${profitClass}">
+                    ${sign}¥${Math.abs(profit).toLocaleString()}
                 </div>
             `;
         }
@@ -272,11 +251,9 @@ function renderBooks(bookList = books) {
                 ? "checked"
                 : "";
 
-        const row =
-            document.createElement("div");
+        const row = document.createElement("div");
 
-        row.className =
-            "inventory-row";
+        row.className = "inventory-row";
 
         row.innerHTML = `
 
@@ -289,10 +266,7 @@ function renderBooks(bookList = books) {
                     onchange="toggleBookSelection(${book.id})"
                 >
 
-                <div class="
-                    status-badge
-                    status-${book.status}
-                ">
+                <div class="status-badge status-${book.status}">
                     ${book.status}
                 </div>
 
@@ -302,7 +276,7 @@ function renderBooks(bookList = books) {
                         ${book.title || ""}
                     </div>
 
-                    ${profitText}
+                    ${profitHTML}
 
                 </div>
 
@@ -338,7 +312,6 @@ function renderBooks(bookList = books) {
         inventoryTable.appendChild(row);
 
     });
-
 }
 
 

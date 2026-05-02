@@ -269,6 +269,8 @@ class Book(db.Model):
             "status":
                 self.status,
 
+            "sale_price": self.sale.sale_price if self.sale else None,
+
             "mercari_url":
                 self.mercari_url,
 

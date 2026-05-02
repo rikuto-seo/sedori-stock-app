@@ -130,7 +130,7 @@ body {
 
     padding: 18px;
 
-    margin-bottom: 14px;
+    margin-bottom: 5px;
 
     box-shadow:
         0 4px 14px rgba(0, 0, 0, 0.05);
@@ -410,7 +410,7 @@ body {
     display: flex;
     flex-direction: column;
 
-    gap: 12px;
+    gap: 5px;
 }
 
 /* =========================
@@ -423,13 +423,13 @@ body {
     justify-content: space-between;
     align-items: center;
 
-    gap: 12px;
+    gap: 5px;
 
     background: white;
 
     border-radius: 18px;
 
-    padding: 14px 16px;
+    padding: 12px 14px;
 
     box-shadow:
         0 4px 12px rgba(0, 0, 0, 0.05);
@@ -458,7 +458,7 @@ body {
     display: flex;
     align-items: center;
 
-    gap: 8px;
+    gap: 6px;
 
     min-width: 0;
 
@@ -606,6 +606,18 @@ body {
         font-size: 11px;
 
         min-height: 30px;
+    }
+
+    .inventory-title-area {
+        gap: 4px;
+    }
+
+    .inventory-profit {
+        font-size: 12px;
+    }
+
+    .inventory-actions {
+        gap: 4px;
     }
 
 }
@@ -765,10 +777,8 @@ body {
     display: grid;
 
     grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(180px, 1fr)
-        );
+        repeat(auto-fit,
+            minmax(180px, 1fr));
 
     gap: 16px;
 
@@ -892,6 +902,23 @@ body {
     transform:
         scale(0.94);
 
+}
+
+/* アコーディオン全体 */
+.accordion {
+    cursor: pointer;
+}
+
+/* コンテンツ部分 */
+.accordion .card-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+/* 開いた状態 */
+.accordion.active .card-content {
+    max-height: 1000px;
 }
 
 /* =========================
