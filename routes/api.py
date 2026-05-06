@@ -405,11 +405,15 @@ def analytics_monthly():
         func.sum(Sale.sale_price).label("sales"),
         func.sum(Sale.fee).label("fees"),
         func.sum(Sale.shipping_cost).label("shipping")
+    ).filter(
+        Sale.sale_date != None   # ← これ追加
     ).group_by("month").all()
 
     costs = db.session.query(
         func.to_char(Cost.cost_date, 'YYYY-MM').label("month"),
         func.sum(Cost.amount)
+    ).filter(
+        Cost.cost_date != None   # ← これも追加
     ).group_by("month").all()
 
     sales_dict = {
