@@ -5,43 +5,25 @@ class Sale(db.Model):
 
     __tablename__ = "sales"
 
-    id = db.Column(
-        db.Integer,
-        primary_key=True
-    )
+    id = db.Column(db.Integer, primary_key=True)
 
-    sale_price = db.Column(
-        db.Integer,
-        default=0
-    )
+    sale_price = db.Column(db.Integer, default=0)
+    fee = db.Column(db.Integer, default=0)
+    shipping_cost = db.Column(db.Integer, default=0)
 
-    fee = db.Column(
-        db.Integer,
-        default=0
-    )
+    sale_date = db.Column(db.DateTime)
 
-    shipping_cost = db.Column(
-        db.Integer,
-        default=0
-    )
+    shipping_method = db.Column(db.String(100))
 
-    sale_date = db.Column(
-        db.DateTime
-    )
+    status = db.Column(db.String(50), default="出品中")
 
-    shipping_method = db.Column(
-        db.String(100)
-    )
-
-    status = db.Column(
-        db.String(50),
-        default="出品中"
-    )
+    # ★ 追加（超重要）
+    book_count = db.Column(db.Integer, default=1)
 
     books = db.relationship(
         "Book",
         backref="sale",
-        lazy=True
+        lazy="select"   # ← 明示
     )
 
     def to_dict(self):

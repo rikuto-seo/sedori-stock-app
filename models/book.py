@@ -120,69 +120,6 @@ class Book(db.Model):
     )
 
     # =========================
-    # 利益計算
-    # =========================
-
-    @property
-    def profit(self):
-
-        if not self.sale:
-            return None
-
-        sale_price = (
-            self.sale.sale_price or 0
-        )
-
-        fee = (
-            self.sale.fee or 0
-        )
-
-        shipping = (
-            self.sale.shipping_cost or 0
-        )
-
-        purchase_price = (
-            self.purchase_price or 0
-        )
-
-        # =========================
-        # セット販売按分
-        # =========================
-
-        book_count = len(
-            self.sale.books
-        )
-
-        if book_count <= 0:
-            return None
-
-        allocated_sale = sale_price / book_count
-
-        allocated_fee = fee / book_count
-
-        allocated_shipping = shipping / book_count
-
-        profit = (
-
-            allocated_sale
-
-            -
-
-            allocated_fee
-
-            -
-
-            allocated_shipping
-
-            -
-
-            purchase_price
-
-        )
-
-        return round(profit)
-
-    # =========================
     # JSON化
     # =========================
 
@@ -275,9 +212,6 @@ class Book(db.Model):
                 self.mercari_url,
 
             "memo":
-                self.memo,
-
-            "profit":
-                self.profit
+                self.memo
 
         }

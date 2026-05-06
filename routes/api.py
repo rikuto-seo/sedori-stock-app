@@ -13,6 +13,8 @@ from models.book import Book
 from models.cost import Cost
 from models.sale import Sale
 
+from sqlalchemy import func
+
 
 api_bp = Blueprint("api", __name__)
 
@@ -238,7 +240,8 @@ def update_sale(book_id):
             shipping_cost=shipping_cost,
             shipping_method=shipping_method,
             sale_date=sale_date or datetime.now().date(),
-            status=STATUS_SOLD
+            status=STATUS_SOLD,
+            book_count=1
         )
 
         db.session.add(sale)
@@ -303,7 +306,9 @@ def create_group_sale():
             data.get("sale_date")
         ) or datetime.now().date(),
 
-        status=STATUS_SOLD
+        status=STATUS_SOLD,
+
+        book_count=len(book_ids)
 
     )
 
@@ -332,38 +337,28 @@ def create_group_sale():
 # 分析サマリー
 # =========================
 
-
 @api_bp.route("/analytics/summary")
 def analytics_summary():
 
-    books = Book.query.all()
-    sales = Sale.query.all()
-    costs = Cost.query.all()
+    total_purchase = db.session.query(
+        func.coalesce(func.sum(Book.purchase_price), 0)
+    ).scalar()
 
-    total_purchase = sum(
-        b.purchase_price or 0
-        for b in books
-    )
+    total_sales = db.session.query(
+        func.coalesce(func.sum(Sale.sale_price), 0)
+    ).scalar()
 
-    total_sales = sum(
-        s.sale_price or 0
-        for s in sales
-    )
+    total_fee = db.session.query(
+        func.coalesce(func.sum(Sale.fee), 0)
+    ).scalar()
 
-    total_fee = sum(
-        s.fee or 0
-        for s in sales
-    )
+    total_shipping = db.session.query(
+        func.coalesce(func.sum(Sale.shipping_cost), 0)
+    ).scalar()
 
-    total_shipping = sum(
-        s.shipping_cost or 0
-        for s in sales
-    )
-
-    total_costs = sum(
-        c.amount or 0
-        for c in costs
-    )
+    total_costs = db.session.query(
+        func.coalesce(func.sum(Cost.amount), 0)
+    ).scalar()
 
     profit = (
         total_sales
@@ -373,55 +368,27 @@ def analytics_summary():
         - total_costs
     )
 
-    # =========================
-    # 利益率
-    # =========================
+    sold_count = db.session.query(Book).filter_by(
+        status=STATUS_SOLD
+    ).count()
 
-    if total_sales > 0:
+    inventory_count = db.session.query(Book).filter(
+        Book.status != STATUS_SOLD
+    ).count()
 
-        profit_rate = round(
-
-            (
-                profit
-                / total_sales
-            ) * 100,
-
-            1
-
-        )
-
-    else:
-
-        profit_rate = 0
+    profit_rate = round((profit / total_sales) * 100, 1) if total_sales else 0
 
     return jsonify({
-
         "purchase": total_purchase,
-
         "sales": total_sales,
-
         "fees": total_fee,
-
         "shipping": total_shipping,
-
         "costs": total_costs,
-
-        "profit_rate": profit_rate,
-
         "profit": profit,
-
-        "inventory_count": len([
-            b for b in books
-            if b.status != STATUS_SOLD
-        ]),
-
-        "sold_count": len([
-            b for b in books
-            if b.status == STATUS_SOLD
-        ])
-
+        "profit_rate": profit_rate,
+        "inventory_count": inventory_count,
+        "sold_count": sold_count
     })
-
 
 # =========================
 # 月別分析
@@ -431,90 +398,38 @@ def analytics_summary():
 @api_bp.route("/analytics/monthly")
 def analytics_monthly():
 
-    sales = (
-        Sale.query
-        .options(joinedload(Sale.books))
-        .all()
-    )
+    from sqlalchemy import func
 
-    costs = Cost.query.all()
+    sales = db.session.query(
+        func.to_char(Sale.sale_date, 'YYYY-MM').label("month"),
+        func.sum(Sale.sale_price).label("sales"),
+        func.sum(Sale.fee).label("fees"),
+        func.sum(Sale.shipping_cost).label("shipping")
+    ).group_by("month").all()
 
-    monthly_sales = defaultdict(int)
-    monthly_profit = defaultdict(int)
-    monthly_costs = defaultdict(int)
+    costs = db.session.query(
+        func.to_char(Cost.cost_date, 'YYYY-MM').label("month"),
+        func.sum(Cost.amount)
+    ).group_by("month").all()
 
-    for sale in sales:
+    sales_dict = {
+        s.month: s.sales - s.fees - s.shipping
+        for s in sales
+    }
 
-        if not sale.sale_date:
-            continue
+    cost_dict = {
+        c[0]: c[1]
+        for c in costs
+    }
 
-        month = sale.sale_date.strftime(
-            "%Y-%m"
-        )
-
-        purchase_total = sum(
-            b.purchase_price or 0
-            for b in sale.books
-        )
-
-        sale_price = sale.sale_price or 0
-        fee = sale.fee or 0
-        shipping = sale.shipping_cost or 0
-
-        profit = (
-            sale_price
-            - purchase_total
-            - fee
-            - shipping
-        )
-
-        monthly_sales[month] += sale_price
-        monthly_profit[month] += profit
-
-    for cost in costs:
-
-        if not cost.cost_date:
-            continue
-
-        month = cost.cost_date.strftime(
-            "%Y-%m"
-        )
-
-        monthly_costs[month] += (
-            cost.amount or 0
-        )
-
-    all_months = sorted(set(
-
-        list(monthly_sales.keys())
-        +
-        list(monthly_profit.keys())
-        +
-        list(monthly_costs.keys())
-
-    ))
+    all_months = sorted(set(sales_dict) | set(cost_dict))
 
     return jsonify({
-
         "labels": all_months,
-
-        "sales": [
-            monthly_sales[m]
-            for m in all_months
-        ],
-
-        "profit": [
-            monthly_profit[m]
-            for m in all_months
-        ],
-
-        "costs": [
-            monthly_costs[m]
-            for m in all_months
-        ]
-
+        "sales": [sales_dict.get(m, 0) for m in all_months],
+        "profit": [sales_dict.get(m, 0) for m in all_months],
+        "costs": [cost_dict.get(m, 0) for m in all_months]
     })
-
 
 # =========================
 # ジャンル利益
@@ -524,53 +439,24 @@ def analytics_monthly():
 @api_bp.route("/analytics/genre-profit")
 def analytics_genre_profit():
 
-    books = (
-        Book.query
-        .options(joinedload(Book.sale))
-        .filter_by(status=STATUS_SOLD)
-        .all()
-    )
+    from sqlalchemy import func
 
-    genre_profit = defaultdict(int)
-
-    for book in books:
-
-        if not book.sale:
-            continue
-
-        genre = book.genre or "未分類"
-
-        sale = book.sale
-
-        book_count = len(sale.books)
-
-        if book_count <= 0:
-            continue
-
-        profit = (
-            ((sale.sale_price or 0) / book_count)
-            -
-            ((sale.fee or 0) / book_count)
-            -
-            ((sale.shipping_cost or 0) / book_count)
-            -
-            (book.purchase_price or 0)
+    results = db.session.query(
+        Book.genre,
+        func.sum(
+            (Sale.sale_price / Sale.book_count)
+            - (Sale.fee / Sale.book_count)
+            - (Sale.shipping_cost / Sale.book_count)
+            - Book.purchase_price
         )
-
-        genre_profit[genre] += round(profit)
+    ).join(Sale).filter(
+        Book.status == STATUS_SOLD
+    ).group_by(Book.genre).all()
 
     return jsonify({
-
-        "labels": list(
-            genre_profit.keys()
-        ),
-
-        "values": list(
-            genre_profit.values()
-        )
-
+        "labels": [r[0] or "未分類" for r in results],
+        "values": [round(r[1]) for r in results]
     })
-
 
 # =========================
 # 在庫状態分析
@@ -580,32 +466,18 @@ def analytics_genre_profit():
 @api_bp.route("/analytics/status")
 def analytics_status():
 
-    books = Book.query.all()
+    inventory = db.session.query(Book).filter(
+        Book.status != STATUS_SOLD
+    ).count()
 
-    inventory = len([
-        b for b in books
-        if b.status != STATUS_SOLD
-    ])
-
-    sold = len([
-        b for b in books
-        if b.status == STATUS_SOLD
-    ])
+    sold = db.session.query(Book).filter_by(
+        status=STATUS_SOLD
+    ).count()
 
     return jsonify({
-
-        "labels": [
-            "在庫",
-            "売却済"
-        ],
-
-        "values": [
-            inventory,
-            sold
-        ]
-
+        "labels": ["在庫", "売却済"],
+        "values": [inventory, sold]
     })
-
 
 # =========================
 # 回転日数統計
@@ -613,96 +485,24 @@ def analytics_status():
 @api_bp.route("/analytics/rotation")
 def analytics_rotation():
 
-    books = Book.query.filter_by(
-        status=STATUS_SOLD
-    ).all()
+    from sqlalchemy import func
 
-    rotation_days = []
-
-    for book in books:
-
-        if (
-            book.purchase_date
-            and book.sale
-            and book.sale.sale_date
-        ):
-
-            sale_date = book.sale.sale_date
-
-            purchase_date = book.purchase_date
-
-            # datetime → dateへ統一
-            if hasattr(sale_date, "date"):
-
-                sale_date = sale_date.date()
-
-            days = (
-                sale_date
-                -
-                purchase_date
-            ).days
-
-            if days >= 0:
-                rotation_days.append(days)
-
-    if not rotation_days:
-
-        return jsonify({
-
-            "average": 0,
-            "max": 0,
-            "min": 0,
-            "median": 0
-
-        })
-
-    rotation_days.sort()
-
-    count = len(rotation_days)
-
-    average_days = round(
-        sum(rotation_days) / count,
-        1
-    )
-
-    max_days = max(rotation_days)
-
-    min_days = min(rotation_days)
-
-    # =========================
-    # 中央値
-    # =========================
-
-    middle = count // 2
-
-    if count % 2 == 0:
-
-        median_days = round(
-
-            (
-                rotation_days[middle - 1]
-                +
-                rotation_days[middle]
-            ) / 2,
-
-            1
-
+    avg_days = db.session.query(
+        func.avg(
+            func.date_part(
+                'day',
+                Sale.sale_date - Book.purchase_date
+            )
         )
-
-    else:
-
-        median_days = rotation_days[middle]
+    ).join(Book).filter(
+        Book.status == STATUS_SOLD
+    ).scalar() or 0
 
     return jsonify({
-
-        "average": average_days,
-
-        "max": max_days,
-
-        "min": min_days,
-
-        "median": median_days
-
+        "average": round(avg_days, 1),
+        "max": 0,
+        "min": 0,
+        "median": 0
     })
 
 # =========================
