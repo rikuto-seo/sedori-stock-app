@@ -3,6 +3,12 @@ let genreChartInstance = null;
 let statusChartInstance = null;
 
 /* =========================
+   DOM取得（←これが必要）
+========================= */
+
+const summaryCards = document.getElementById("summary-cards");
+
+/* =========================
    Summary
 ========================= */
 
@@ -19,6 +25,8 @@ function safeNumber(val) {
 }
 
 function renderSummary(data) {
+
+    if (!summaryCards) return; // 念のため防御
 
     summaryCards.innerHTML = `
 
