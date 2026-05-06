@@ -1,20 +1,21 @@
-const summaryCards =
-    document.getElementById(
-        "summary-cards"
-    );
+let monthlyChartInstance = null;
+let genreChartInstance = null;
+let statusChartInstance = null;
+
+/* =========================
+   Summary
+========================= */
 
 async function loadSummary() {
 
-    const response =
-        await fetch(
-            "/api/analytics/summary"
-        );
-
-    const data =
-        await response.json();
+    const res = await fetch("/api/analytics/summary");
+    const data = await res.json();
 
     renderSummary(data);
+}
 
+function safeNumber(val) {
+    return Number(val || 0);
 }
 
 function renderSummary(data) {
@@ -22,382 +23,266 @@ function renderSummary(data) {
     summaryCards.innerHTML = `
 
         <div class="analytics-card">
-            <div class="analytics-label">
-                総利益
-            </div>
-
+            <div class="analytics-label">総利益</div>
             <div class="analytics-value">
-                ¥${data.profit.toLocaleString()}
+                ¥${safeNumber(data.profit).toLocaleString()}
             </div>
         </div>
 
         <div class="analytics-card">
-
-            <div class="analytics-label">
-                利益率
-            </div>
-
+            <div class="analytics-label">利益率</div>
             <div class="analytics-value">
-                ${data.profit_rate}%
+                ${safeNumber(data.profit_rate)}%
             </div>
-
         </div>
 
         <div class="analytics-card">
             総売上<br>
-            ¥${data.sales.toLocaleString()}
+            ¥${safeNumber(data.sales).toLocaleString()}
         </div>
 
         <div class="analytics-card">
             総仕入<br>
-            ¥${data.purchase.toLocaleString()}
+            ¥${safeNumber(data.purchase).toLocaleString()}
         </div>
 
         <div class="analytics-card">
             総送料<br>
-            ¥${data.shipping.toLocaleString()}
+            ¥${safeNumber(data.shipping).toLocaleString()}
         </div>
 
         <div class="analytics-card">
             経費<br>
-            ¥${data.costs.toLocaleString()}
-            
+            ¥${safeNumber(data.costs).toLocaleString()}
         </div>
 
         <div class="analytics-card">
             売却数<br>
-            ${data.sold_count}
+            ${safeNumber(data.sold_count)}
         </div>
 
         <div class="analytics-card">
             在庫数<br>
-            ${data.inventory_count}
+            ${safeNumber(data.inventory_count)}
         </div>
 
     `;
-
 }
+
+/* =========================
+   Monthly Chart
+========================= */
 
 async function loadMonthlyChart() {
 
-    const response =
-        await fetch(
-            "/api/analytics/monthly"
-        );
-
-    const data =
-        await response.json();
+    const res = await fetch("/api/analytics/monthly");
+    const data = await res.json();
 
     renderMonthlyChart(data);
-
 }
 
 function renderMonthlyChart(data) {
 
-    const ctx =
-        document.getElementById(
-            "monthlyChart"
-        );
+    const ctx = document.getElementById("monthlyChart");
 
-    new Chart(ctx, {
+    if (monthlyChartInstance) {
+        monthlyChartInstance.destroy();
+    }
+
+    monthlyChartInstance = new Chart(ctx, {
 
         type: "line",
 
         data: {
-
-            labels:
-                data.labels,
-
+            labels: data.labels || [],
             datasets: [
-
                 {
                     label: "売上",
-
-                    data:
-                        data.sales,
-
+                    data: data.sales || [],
                     tension: 0.3
                 },
-
                 {
                     label: "利益",
-
-                    data:
-                        data.profit,
-
+                    data: data.profit || [],
                     tension: 0.3
                 },
-
                 {
                     label: "経費",
-
-                    data:
-                        data.costs,
-
+                    data: data.costs || [],
                     tension: 0.3
                 }
-
             ]
-
         },
 
         options: {
-
             responsive: true,
-
             plugins: {
-
-                legend: {
-                    display: true
-                }
-
+                legend: { display: true }
             },
-
             scales: {
-
                 y: {
-
                     ticks: {
-
-                        callback:
-                            function(value) {
-
-                                return "¥"
-                                    + value
-                                    .toLocaleString();
-
-                            }
-
+                        callback: (v) => "¥" + v.toLocaleString()
                     }
-
                 }
-
             }
-
         }
 
     });
-
 }
+
+/* =========================
+   Genre Profit
+========================= */
 
 async function loadGenreProfit() {
 
-    const response =
-        await fetch(
-            "/api/analytics/genre-profit"
-        );
+    const res = await fetch("/api/analytics/genre-profit");
+    const data = await res.json();
 
-    const data =
-        await response.json();
+    const ctx = document.getElementById("genreProfitChart");
 
-    new Chart(
+    if (genreChartInstance) {
+        genreChartInstance.destroy();
+    }
 
-        document.getElementById(
-            "genreProfitChart"
-        ),
+    genreChartInstance = new Chart(ctx, {
 
-        {
+        type: "doughnut",
 
-            type: "doughnut",
-
-            data: {
-
-                labels:
-                    data.labels,
-
-                datasets: [
-                    {
-                        data:
-                            data.values
-                    }
-                ]
-
-            }
-
+        data: {
+            labels: data.labels || [],
+            datasets: [
+                {
+                    data: data.values || []
+                }
+            ]
         }
 
-    );
-
+    });
 }
+
+/* =========================
+   Status
+========================= */
 
 async function loadStatusChart() {
 
-    const response =
-        await fetch(
-            "/api/analytics/status"
-        );
+    const res = await fetch("/api/analytics/status");
+    const data = await res.json();
 
-    const data =
-        await response.json();
+    const ctx = document.getElementById("statusChart");
 
-    new Chart(
+    if (statusChartInstance) {
+        statusChartInstance.destroy();
+    }
 
-        document.getElementById(
-            "statusChart"
-        ),
+    statusChartInstance = new Chart(ctx, {
 
-        {
+        type: "pie",
 
-            type: "pie",
-
-            data: {
-
-                labels:
-                    data.labels,
-
-                datasets: [
-                    {
-                        data:
-                            data.values
-                    }
-                ]
-
-            }
-
+        data: {
+            labels: data.labels || [],
+            datasets: [
+                {
+                    data: data.values || []
+                }
+            ]
         }
 
-    );
-
+    });
 }
+
+/* =========================
+   Rotation
+========================= */
 
 async function loadRotationStats() {
 
-    const response =
-        await fetch(
-            "/api/analytics/rotation"
-        );
-
-    const data =
-        await response.json();
+    const res = await fetch("/api/analytics/rotation");
+    const data = await res.json();
 
     renderRotationStats(data);
-
 }
 
 function renderRotationStats(data) {
 
     const container =
-        document.getElementById(
-            "rotation-stats"
-        );
+        document.getElementById("rotation-stats");
 
     container.innerHTML = `
 
         <div class="rotation-grid">
 
             <div class="analytics-card">
-
-                <div class="analytics-label">
-                    平均
-                </div>
-
+                <div class="analytics-label">平均</div>
                 <div class="analytics-value">
-                    ${data.average}日
+                    ${safeNumber(data.average)}日
                 </div>
-
             </div>
 
             <div class="analytics-card">
-
-                <div class="analytics-label">
-                    最短
-                </div>
-
+                <div class="analytics-label">最短</div>
                 <div class="analytics-value">
-                    ${data.min}日
+                    ${safeNumber(data.min)}日
                 </div>
-
             </div>
 
             <div class="analytics-card">
-
-                <div class="analytics-label">
-                    最長
-                </div>
-
+                <div class="analytics-label">最長</div>
                 <div class="analytics-value">
-                    ${data.max}日
+                    ${safeNumber(data.max)}日
                 </div>
-
             </div>
 
             <div class="analytics-card">
-
-                <div class="analytics-label">
-                    中央値
-                </div>
-
+                <div class="analytics-label">中央値</div>
                 <div class="analytics-value">
-                    ${data.median}日
+                    ${safeNumber(data.median)}日
                 </div>
-
             </div>
 
         </div>
 
     `;
-
 }
+
+/* =========================
+   Profit Ranking
+========================= */
 
 async function loadProfitRanking() {
 
-    const response =
-        await fetch(
-            "/api/analytics/profit-ranking"
-        );
-
-    const data =
-        await response.json();
+    const res = await fetch("/api/analytics/profit-ranking");
+    const data = await res.json();
 
     const container =
-        document.getElementById(
-            "profit-ranking"
-        );
+        document.getElementById("profit-ranking");
 
     container.innerHTML = "";
 
-    data.forEach((item, index) => {
+    (data || []).forEach((item, index) => {
 
         container.innerHTML += `
-
             <div class="inventory-row">
-
-                <div>
-
-                    ${index + 1}.
-                    ${item.title}
-
-                </div>
-
-                <div>
-
-                    ${item.rate}%
-
-                </div>
-
+                <div>${index + 1}. ${item.title}</div>
+                <div>${safeNumber(item.rate)}%</div>
             </div>
-
         `;
-
     });
-
 }
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+/* =========================
+   Init
+========================= */
 
-        loadSummary();
+document.addEventListener("DOMContentLoaded", () => {
 
-        loadMonthlyChart();
+    loadSummary();
+    loadMonthlyChart();
+    loadGenreProfit();
+    loadStatusChart();
+    loadRotationStats();
+    loadProfitRanking();
 
-        loadGenreProfit();
-
-        loadStatusChart();
-
-        loadRotationStats();
-
-        loadProfitRanking();
-
-    }
-);
+});

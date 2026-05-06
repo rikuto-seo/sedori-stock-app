@@ -207,11 +207,9 @@ async function submitGroupSale(e) {
 function renderBooks(bookList = books) {
 
     inventoryTable.innerHTML = "";
-
     bookCount.textContent = bookList.length;
 
     if (bookList.length === 0) {
-
         inventoryTable.innerHTML = `
             <div class="inventory-row">
                 データがありません
@@ -224,15 +222,17 @@ function renderBooks(bookList = books) {
 
         let profitHTML = "";
 
-        const salePrice = Number(book.sale_price || 0);
+        const sale = book.sale || {};
+
+        const salePrice = Number(sale.sale_price || 0);
+        const fee = Number(sale.fee || 0);
+        const shipping = Number(sale.shipping_cost || 0);
         const purchasePrice = Number(book.purchase_price || 0);
-        const shipping = Number(book.shipping_cost || 0);
-        const fee = Number(book.fee || 0);
 
         if (salePrice > 0) {
 
             const profit =
-                salePrice - fee - purchasePrice - shipping;
+                salePrice - fee - shipping - purchasePrice;
 
             const profitClass =
                 profit >= 0 ? "profit-plus" : "profit-minus";
@@ -313,7 +313,6 @@ function renderBooks(bookList = books) {
 
     });
 }
-
 
 /* =========================
    Cコード自動分類
@@ -735,34 +734,26 @@ function openSaleModal(book) {
     feeManuallyEdited = false;
     shippingManuallyEdited = false;
 
-    document.getElementById(
-        "sale-modal"
-    ).style.display = "flex";
+    const sale = book.sale || {};
 
-    document.getElementById(
-        "sale-id"
-    ).value = book.id;
+    document.getElementById("sale-modal").style.display = "flex";
 
-    salePriceInput.value =
-        book.sale_price || "";
+    document.getElementById("sale-id").value = book.id;
 
-    saleFeeInput.value =
-        book.fee || "";
-
-    shippingInput.value =
-        book.shipping_cost || "";
+    salePriceInput.value = sale.sale_price || "";
+    saleFeeInput.value = sale.fee || "";
+    shippingInput.value = sale.shipping_cost || "";
 
     saleDateInput.value =
-        book.sale_date
-            ? book.sale_date.slice(0, 10)
+        sale.sale_date
+            ? sale.sale_date.slice(0, 10)
             : "";
 
     shippingMethodInput.value =
-        book.shipping_method || "";
+        sale.shipping_method || "";
 
     saleStatusInput.value =
         book.status || "出品中";
-
 }
 
 
