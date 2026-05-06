@@ -413,7 +413,12 @@ def analytics_monthly():
     ).group_by("month").all()
 
     sales_dict = {
-        s.month: s.sales - s.fees - s.shipping
+        s.month: s.sales
+        for s in sales
+    }
+
+    profit_dict = {
+        s.month: (s.sales - s.fees - s.shipping)
         for s in sales
     }
 
@@ -427,7 +432,7 @@ def analytics_monthly():
     return jsonify({
         "labels": all_months,
         "sales": [sales_dict.get(m, 0) for m in all_months],
-        "profit": [sales_dict.get(m, 0) for m in all_months],
+        "profit": [profit_dict.get(m, 0) for m in all_months],
         "costs": [cost_dict.get(m, 0) for m in all_months]
     })
 
@@ -444,9 +449,9 @@ def analytics_genre_profit():
     results = db.session.query(
         Book.genre,
         func.sum(
-            (Sale.sale_price / Sale.book_count)
-            - (Sale.fee / Sale.book_count)
-            - (Sale.shipping_cost / Sale.book_count)
+            (Sale.sale_price / func.nullif(Sale.book_count, 0))
+            - (Sale.fee / func.nullif(Sale.book_count, 0))
+            - (Sale.shipping_cost / func.nullif(Sale.book_count, 0))
             - Book.purchase_price
         )
     ).join(Sale).filter(
@@ -532,7 +537,7 @@ def analytics_profit_ranking():
 
         sale = book.sale
 
-        book_count = len(sale.books)
+        book_count = sale.book_count or 1
 
         if book_count <= 0:
             continue
