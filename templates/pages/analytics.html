@@ -22,7 +22,24 @@
             月別推移
         </div>
 
-        <canvas id="monthlyChart"></canvas>
+        <div class="accordion-content">
+            <div class="chart-filter">
+
+                <button class="period-btn active" data-period="6m">
+                    半年
+                </button>
+
+                <button class="period-btn" data-period="1y">
+                    1年
+                </button>
+
+                <button class="period-btn" data-period="all">
+                    すべて
+                </button>
+
+            </div>
+            <canvas id="monthlyChart"></canvas>
+        </div>
 
     </div>
 
@@ -33,29 +50,41 @@
             ジャンル別利益
         </div>
 
-        <canvas id="genreProfitChart"></canvas>
+        <div class="accordion-content">
+            <canvas id="genreProfitChart"></canvas>
+        </div>
 
     </div>
 
-    <!-- 在庫状態（小さめ） -->
-    <div class="card chart-small accordion">
+    <!-- 在庫状態 -->
+    <div class="card chart-large accordion">
 
         <div class="card-header">
             在庫状態
         </div>
 
-        <canvas id="statusChart"></canvas>
+        <div class="accordion-content">
+            <canvas id="statusChart"></canvas>
+        </div>
 
     </div>
 
-    <!-- 回転日数統計 -->
+    <!-- 回転日数 -->
     <div class="card chart-wide accordion">
 
         <div class="card-header">
             回転日数
         </div>
 
-        <div id="rotation-stats" class="rotation-stats">
+        <div class="accordion-content">
+
+            <div class="accordion-inner">
+
+                <div id="rotation-stats" class="rotation-stats">
+                </div>
+
+            </div>
+
         </div>
 
     </div>
@@ -67,7 +96,9 @@
             利益率ランキング
         </div>
 
-        <div id="profit-ranking">
+        <div class="accordion-content">
+            <div id="profit-ranking">
+            </div>
         </div>
 
     </div>

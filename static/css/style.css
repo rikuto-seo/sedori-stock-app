@@ -905,20 +905,48 @@ body {
 }
 
 /* アコーディオン全体 */
-.accordion {
+.accordion .card-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+}
+
+.accordion-content canvas {
+    width: 100% !important;
+}
+
+.rotation-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    padding-top: 16px;
+}
+
+.accordion-inner {
+    padding-top: 16px;
+}
+
+.chart-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.period-btn {
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
     cursor: pointer;
 }
 
-/* コンテンツ部分 */
-.accordion .card-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-}
-
-/* 開いた状態 */
-.accordion.active .card-content {
-    max-height: 1000px;
+.period-btn.active {
+    font-weight: bold;
 }
 
 /* =========================

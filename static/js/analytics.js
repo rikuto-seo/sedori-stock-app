@@ -81,9 +81,13 @@ function renderSummary(data) {
    Monthly Chart
 ========================= */
 
-async function loadMonthlyChart() {
+async function loadMonthlyChart(period = "6m") {
 
-    const res = await fetch("/api/analytics/monthly");
+    const res =
+        await fetch(
+            `/api/analytics/monthly?period=${period}`
+        );
+
     const data = await res.json();
 
     renderMonthlyChart(data);
@@ -104,21 +108,31 @@ function renderMonthlyChart(data) {
         data: {
             labels: data.labels || [],
             datasets: [
+
                 {
                     label: "売上",
                     data: data.sales || [],
                     tension: 0.3
                 },
+
                 {
                     label: "利益",
                     data: data.profit || [],
                     tension: 0.3
                 },
+
+                {
+                    label: "仕入",
+                    data: data.purchase || [],
+                    tension: 0.3
+                },
+
                 {
                     label: "経費",
                     data: data.costs || [],
                     tension: 0.3
                 }
+
             ]
         },
 
@@ -137,6 +151,36 @@ function renderMonthlyChart(data) {
         }
 
     });
+}
+
+/* =========================
+   Monthly Period Filter
+========================= */
+
+function initMonthlyFilter() {
+
+    const buttons =
+        document.querySelectorAll(".period-btn");
+
+    buttons.forEach((btn) => {
+
+        btn.addEventListener("click", async () => {
+
+            buttons.forEach((b) => {
+                b.classList.remove("active");
+            });
+
+            btn.classList.add("active");
+
+            const period =
+                btn.dataset.period;
+
+            await loadMonthlyChart(period);
+
+        });
+
+    });
+
 }
 
 /* =========================
@@ -218,6 +262,8 @@ function renderRotationStats(data) {
     const container =
         document.getElementById("rotation-stats");
 
+    if (!container) return;
+
     container.innerHTML = `
 
         <div class="rotation-grid">
@@ -281,16 +327,85 @@ async function loadProfitRanking() {
 }
 
 /* =========================
+   Accordion
+========================= */
+
+function initAccordion() {
+
+    const accordions =
+        document.querySelectorAll(".accordion");
+
+    accordions.forEach((accordion) => {
+
+        const header =
+            accordion.querySelector(".card-header");
+
+        const content =
+            accordion.querySelector(
+                ".accordion-content"
+            );
+
+        header.addEventListener("click", () => {
+
+            if (
+                accordion.classList.contains("open")
+            ) {
+
+                accordion.classList.remove("open");
+
+                content.style.maxHeight = null;
+
+            } else {
+
+                accordion.classList.add("open");
+
+                content.style.maxHeight =
+                    content.scrollHeight + "px";
+
+            }
+
+            setTimeout(() => {
+
+                if (monthlyChartInstance) {
+                    monthlyChartInstance.resize();
+                }
+
+                if (genreChartInstance) {
+                    genreChartInstance.resize();
+                }
+
+                if (statusChartInstance) {
+                    statusChartInstance.resize();
+                }
+
+            }, 350);
+
+        });
+
+    });
+
+}
+
+/* =========================
    Init
 ========================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
     loadSummary();
-    loadMonthlyChart();
+
+    loadMonthlyChart("6m");
+
     loadGenreProfit();
+
     loadStatusChart();
+
     loadRotationStats();
+
     loadProfitRanking();
+
+    initAccordion();
+
+    initMonthlyFilter();
 
 });
