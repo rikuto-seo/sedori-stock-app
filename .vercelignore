@@ -1,0 +1,14 @@
+.git/
+.venv/
+.venv-*/
+venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+instance/
+migrations/
+tests/
+*.csv

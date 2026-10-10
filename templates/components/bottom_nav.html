@@ -1,6 +1,4 @@
-<nav class="bottom-nav">
-    <a href="/">仕入れ</a>
-    <a href="/inventory">在庫</a>
-    <a href="/costs">経費</a>
-    <a href="/analytics">分析</a>
-</nav>
+<nav class="bottom-nav" aria-label="メインメニュー">
+{% for path, icon, label in [('/', '＋', '仕入れ登録'), ('/inventory', '▤', '在庫一覧'), ('/costs', '¥', '経費管理'), ('/analytics', '▥', '統計・分析')] %}
+<a href="{{ path }}" class="{{ 'active' if request.path == path else '' }}" {% if request.path == path %}aria-current="page"{% endif %}><span aria-hidden="true">{{ icon }}</span>{{ label }}</a>
+{% endfor %}</nav>

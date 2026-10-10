@@ -1,87 +1,22 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
-
-    <meta name="theme-color" content="#2563eb">
-
-    <title>{% block title %}せどり在庫管理{% endblock %}</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+<meta name="theme-color" content="#174c43">
+<title>{% block title %}せどり在庫管理{% endblock %} | BOOKKEEP</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/design.css') }}">
+<script src="{{ url_for('static', filename='js/common.js') }}"></script>
 </head>
-
 <body>
-
-    {% include 'components/bottom_nav.html' %}
-
-    <main class="main-content">
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- =========================
-     トップへ戻る
-========================= -->
-    <button id="scroll-top-button" class="scroll-top-button" onclick="scrollToTop()">
-        ↑
-    </button>
-
-    <script>
-
-        function scrollToTop() {
-
-            window.scrollTo({
-
-                top: 0,
-
-                behavior: "smooth"
-
-            });
-
-        }
-
-        /* =========================
-           表示制御
-        ========================= */
-
-        const scrollTopButton =
-            document.getElementById(
-                "scroll-top-button"
-            );
-
-        window.addEventListener(
-            "scroll",
-            () => {
-
-                if (window.scrollY > 300) {
-
-                    scrollTopButton.classList.add(
-                        "show"
-                    );
-
-                }
-
-                else {
-
-                    scrollTopButton.classList.remove(
-                        "show"
-                    );
-
-                }
-
-            }
-        );
-
-    </script>
-
-    <script src="{{ url_for('static', filename='js/form.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/inventory.js') }}"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-</body>
-
-</html>
+<aside class="app-sidebar"><a class="brand" href="/"><span class="brand-mark">B</span> BOOKKEEP</a><span class="brand-caption">本の仕入れと、その先を。</span>
+{% include 'components/bottom_nav.html' %}
+<div class="sidebar-note">小さな記録が、<br>次のいい仕入れにつながる。</div></aside>
+<main class="main-content">{% if config.get('DATABASE_CONFIGURATION_ERROR') %}<div class="card" role="alert">{{ config['DATABASE_CONFIGURATION_ERROR'] }}</div>{% endif %}{% block content %}{% endblock %}</main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="{{ url_for('static', filename='js/inventory.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body></html>

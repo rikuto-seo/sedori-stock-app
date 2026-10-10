@@ -1,111 +1,11 @@
 {% extends 'base.html' %}
-
-{% block title %}
-分析
-{% endblock %}
-
+{% block title %}統計・分析{% endblock %}
 {% block content %}
-
-<div class="purchase-page">
-
-    <h1 class="page-title">
-        分析
-    </h1>
-
-    <div class="analytics-grid" id="summary-cards">
-    </div>
-
-    <!-- 月別推移 -->
-    <div class="card chart-large accordion">
-
-        <div class="card-header">
-            月別推移
-        </div>
-
-        <div class="accordion-content">
-            <div class="chart-filter">
-
-                <button class="period-btn active" data-period="6m">
-                    半年
-                </button>
-
-                <button class="period-btn" data-period="1y">
-                    1年
-                </button>
-
-                <button class="period-btn" data-period="all">
-                    すべて
-                </button>
-
-            </div>
-            <canvas id="monthlyChart"></canvas>
-        </div>
-
-    </div>
-
-    <!-- ジャンル別利益 -->
-    <div class="card chart-large accordion">
-
-        <div class="card-header">
-            ジャンル別利益
-        </div>
-
-        <div class="accordion-content">
-            <canvas id="genreProfitChart"></canvas>
-        </div>
-
-    </div>
-
-    <!-- 在庫状態 -->
-    <div class="card chart-large accordion">
-
-        <div class="card-header">
-            在庫状態
-        </div>
-
-        <div class="accordion-content">
-            <canvas id="statusChart"></canvas>
-        </div>
-
-    </div>
-
-    <!-- 回転日数 -->
-    <div class="card chart-wide accordion">
-
-        <div class="card-header">
-            回転日数
-        </div>
-
-        <div class="accordion-content">
-
-            <div class="accordion-inner">
-
-                <div id="rotation-stats" class="rotation-stats">
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- 利益率ランキング -->
-    <div class="card chart-large accordion">
-
-        <div class="card-header">
-            利益率ランキング
-        </div>
-
-        <div class="accordion-content">
-            <div id="profit-ranking">
-            </div>
-        </div>
-
-    </div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/static/js/analytics.js"></script>
-
+<header class="page-header"><div><p class="eyebrow">INSIGHTS</p><h1 class="page-title">数字で、次の仕入れを考える。</h1><p class="page-description">売れた本の利益と、いま持っている在庫をひと目で。</p></div><button id="refresh-analytics" class="secondary">更新</button></header>
+<div id="analytics-status" class="input-help" role="status">集計しています…</div>
+<div class="analytics-grid" id="summary-cards" aria-busy="true"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+<section class="card"><div class="section-heading"><div><h2>月別の推移</h2><p class="muted">売上・実現利益・仕入れ額</p></div><div class="chart-filter"><button class="period-btn active" data-period="6m">半年</button><button class="period-btn" data-period="1y">1年</button><button class="period-btn" data-period="all">全期間</button></div></div><div id="monthly-chart" class="monthly-chart"></div><div class="chart-legend"><span class="legend-sales">売上</span><span class="legend-profit">実現利益</span><span class="legend-purchase">仕入れ</span></div><details class="monthly-details"><summary>月ごとの金額を見る</summary><div id="monthly-table" class="table-scroll"></div></details></section>
+<div class="insights-layout"><section class="card"><div class="section-heading"><h2>在庫と回転</h2><span class="muted">全期間</span></div><div id="inventory-insights"></div><div id="rotation-stats" class="rotation-grid"></div></section><section class="card"><div class="section-heading"><h2>利益の高い本</h2><span class="muted">上位10冊 / 全期間</span></div><div id="profit-ranking"></div></section><section class="card"><div class="section-heading"><h2>ジャンル別の成果</h2><span class="muted">全期間</span></div><div id="genre-breakdown"></div></section><section class="card"><div class="section-heading"><h2>仕入れ店舗別の成果</h2><span class="muted">全期間</span></div><div id="store-breakdown"></div></section></div>
+<p class="analytics-footnote">実現利益 = 売上 − 売れた本の仕入れ値 − 手数料 − 送料 − 経費。資金収支には未売却の本の仕入れ値も含みます。セット販売の利益は各冊に均等配分。ジャンル・店舗・本別の利益は共通経費を含みません。</p>
 {% endblock %}
+{% block scripts %}<script src="/static/js/analytics.js"></script>{% endblock %}

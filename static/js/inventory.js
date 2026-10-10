@@ -52,19 +52,14 @@ async function initInventory() {
 
     try {
 
-        const response = await fetch(
-            "/api/books"
-        );
-
-        books = await response.json();
-
-        renderBooks(books);
+        books = await apiRequest("/api/books");
+        filterBooks();
 
     }
 
     catch (error) {
 
-        console.error(error);
+        if (inventoryTable) inventoryTable.innerHTML = `<div class="empty-state">${escapeHTML(error.message)} <button onclick="initInventory()">再試行</button></div>`;
 
     }
 
@@ -85,7 +80,7 @@ function toggleBookSelection(bookId) {
 
     }
 
-    renderBooks();
+    filterBooks();
 
 }
 
@@ -102,6 +97,7 @@ function openGroupSaleModal() {
     document.getElementById(
         "group-sale-modal"
     ).style.display = "flex";
+    document.getElementById("group-sale-date").value = localDate();
 
     document.getElementById(
         "selected-books"
@@ -161,7 +157,7 @@ async function submitGroupSale(e) {
 
     };
 
-    const response = await fetch(
+    const response = await apiRequest(
 
         "/api/sales/group",
 
@@ -182,21 +178,15 @@ async function submitGroupSale(e) {
 
     );
 
-    if (!response.ok) {
 
-        alert("セット販売失敗");
 
-        return;
-
-    }
-
-    alert("セット販売完了");
+    toast("セット販売を登録しました");
 
     selectedBooks = [];
 
     closeGroupSaleModal();
 
-    initInventory();
+    if (inventoryTable) initInventory();
 
 }
 
@@ -205,112 +195,20 @@ async function submitGroupSale(e) {
 ========================= */
 
 function renderBooks(bookList = books) {
-
-    inventoryTable.innerHTML = "";
+    if (!inventoryTable) return;
+    inventoryTable.innerHTML = '';
     bookCount.textContent = bookList.length;
-
-    if (bookList.length === 0) {
-        inventoryTable.innerHTML = `
-            <div class="inventory-row">
-                データがありません
-            </div>
-        `;
-        return;
-    }
-
-    bookList.forEach((book) => {
-
-        let profitHTML = "";
-
-        const sale = book.sale || {};
-
-        const salePrice = Number(sale.sale_price || 0);
-        const fee = Number(sale.fee || 0);
-        const shipping = Number(sale.shipping_cost || 0);
-        const purchasePrice = Number(book.purchase_price || 0);
-
-        if (salePrice > 0) {
-
-            const profit =
-                salePrice - fee - shipping - purchasePrice;
-
-            const profitClass =
-                profit >= 0 ? "profit-plus" : "profit-minus";
-
-            const sign = profit >= 0 ? "+" : "-";
-
-            profitHTML = `
-                <div class="inventory-profit ${profitClass}">
-                    ${sign}¥${Math.abs(profit).toLocaleString()}
-                </div>
-            `;
-        }
-
-        const checked =
-            selectedBooks.includes(book.id)
-                ? "checked"
-                : "";
-
-        const row = document.createElement("div");
-
-        row.className = "inventory-row";
-
-        row.innerHTML = `
-
-            <div class="inventory-main">
-
-                <input
-                    type="checkbox"
-                    class="group-checkbox"
-                    ${checked}
-                    onchange="toggleBookSelection(${book.id})"
-                >
-
-                <div class="status-badge status-${book.status}">
-                    ${book.status}
-                </div>
-
-                <div class="inventory-title-area">
-
-                    <div class="inventory-title">
-                        ${book.title || ""}
-                    </div>
-
-                    ${profitHTML}
-
-                </div>
-
-            </div>
-
-            <div class="inventory-actions">
-
-                <button
-                    class="detail-button"
-                    onclick='openDetailModal(${JSON.stringify(book)})'
-                >
-                    詳細
-                </button>
-
-                <button
-                    class="sale-button"
-                    onclick='openSaleModal(${JSON.stringify(book)})'
-                >
-                    販売
-                </button>
-
-                <button
-                    class="delete-button"
-                    onclick="deleteBook(${book.id})"
-                >
-                    削除
-                </button>
-
-            </div>
-
-        `;
-
+    if (!bookList.length) { inventoryTable.innerHTML = '<div class="empty-state">該当する本がありません。仕入れ登録から本を追加できます。</div>'; return; }
+    bookList.forEach(book => {
+        const sale = book.sale || {}, divisor = Number(sale.book_count || 1);
+        const profit = (Number(sale.sale_price || 0)-Number(sale.fee || 0)-Number(sale.shipping_cost || 0))/divisor - Number(book.purchase_price || 0);
+        const row = document.createElement('div'); row.className = 'inventory-row';
+        row.innerHTML = `<div class="inventory-main"><input type="checkbox" class="group-checkbox" aria-label="${escapeHTML(book.title)}を選択" ${book.sale_id ? 'disabled' : ''} ${selectedBooks.includes(book.id)?'checked':''}><div class="status-badge status-${book.sale_id ? '売却済':'出品中'}">${book.sale_id ? '売却済':'出品中'}</div><div class="inventory-title-area"><div class="inventory-title">${escapeHTML(book.title)}</div><div class="inventory-meta">${escapeHTML(book.isbn || 'ISBNなし')} · ${escapeHTML(book.purchase_store || '店舗未指定')} · ${escapeHTML(book.purchase_date || '')} · 仕入れ ¥${Number(book.purchase_price).toLocaleString()}</div>${book.sale_id ? `<div class="inventory-profit ${profit>=0?'profit-plus':'profit-minus'}">利益 ¥${Math.round(profit).toLocaleString()}${divisor>1?' / セット配分':''}</div>`:''}</div></div><div class="inventory-actions"><button class="detail-button">編集</button><button class="sale-button" ${divisor>1?'disabled':''}>${book.sale_id?'販売詳細':'販売登録'}</button><button class="delete-button" ${book.sale_id?'disabled':''}>削除</button></div>`;
+        row.querySelector('input').addEventListener('change',()=>toggleBookSelection(book.id));
+        row.querySelector('.detail-button').addEventListener('click',()=>openDetailModal(book));
+        row.querySelector('.sale-button').addEventListener('click',()=>openSaleModal(book));
+        row.querySelector('.delete-button').addEventListener('click',()=>deleteBook(book.id));
         inventoryTable.appendChild(row);
-
     });
 }
 
@@ -629,6 +527,7 @@ function filterBooks() {
 
     const status =
         statusFilter.value;
+    const aging = new URLSearchParams(location.search).get("aging") === "90";
 
     const filtered = books.filter(
         (book) => {
@@ -650,11 +549,12 @@ function filterBooks() {
 
                 ||
 
-                book.status === status;
+                (book.sale_id ? "売却済" : "出品中") === status;
 
             return (
                 matchesSearch
                 && matchesStatus
+                && (!aging || (!book.sale_id && book.purchase_date && (new Date(localDate()) - new Date(book.purchase_date)) / 86400000 > 90))
             );
 
         }
@@ -890,8 +790,7 @@ if (salePriceInput) {
 
                 if (!saleDateInput.value) {
 
-                    saleDateInput.valueAsDate =
-                        new Date();
+                    saleDateInput.value = localDate();
 
                 }
 
@@ -976,7 +875,7 @@ if (detailForm) {
 
             };
 
-            await fetch(
+            await apiRequest(
                 `/api/books/${id}`,
                 {
 
@@ -994,7 +893,7 @@ if (detailForm) {
 
             closeDetailModal();
 
-            initInventory();
+            if (inventoryTable) initInventory();
 
         }
     );
@@ -1046,7 +945,7 @@ if (saleForm) {
 
             };
 
-            await fetch(
+            await apiRequest(
                 `/api/books/${id}/sale`,
                 {
 
@@ -1064,7 +963,7 @@ if (saleForm) {
 
             closeSaleModal();
 
-            initInventory();
+            if (inventoryTable) initInventory();
 
         }
     );
@@ -1084,14 +983,14 @@ async function deleteBook(id) {
 
     if (!confirmed) return;
 
-    await fetch(
+    await apiRequest(
         `/api/books/${id}`,
         {
             method: "DELETE"
         }
     );
 
-    initInventory();
+    if (inventoryTable) initInventory();
 
 }
 
@@ -1124,4 +1023,4 @@ if (statusFilter) {
    起動
 ========================= */
 
-initInventory();
+if (inventoryTable) initInventory();

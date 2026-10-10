@@ -1,41 +1,14 @@
-import requests
-
 from flask import Blueprint, jsonify
-
+from services.isbn import lookup, normalize_isbn
 
 scan_bp = Blueprint("scan", __name__)
 
 
-@scan_bp.route("/isbn/<isbn>")
+@scan_bp.get("/isbn/<isbn>")
 def scan_isbn(isbn):
-
-    url = (
-        f"https://www.googleapis.com/books/v1/volumes"
-        f"?q=isbn:{isbn}"
-    )
-
-    response = requests.get(url)
-
-    data = response.json()
-
-    items = data.get("items")
-
-    if not items:
-
-        return jsonify({
-            "error": "Book not found"
-        }), 404
-
-    volume_info = items[0]["volumeInfo"]
-
-    return jsonify({
-
-        "title": volume_info.get("title"),
-
-        "publisher": volume_info.get("publisher"),
-
-        "genre": (
-            volume_info.get("categories", [None])[0]
-        )
-
-    })
+    try:
+        normalized = normalize_isbn(isbn)
+    except ValueError as error:
+        return jsonify(message=str(error)), 400
+    data, status = lookup(normalized)
+    return jsonify(data), status

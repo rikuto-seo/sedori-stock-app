@@ -134,6 +134,8 @@ class Book(db.Model):
                 "id":
                     self.sale.id,
 
+                "book_count": self.sale.book_count or 1,
+
                 "sale_price":
                     self.sale.sale_price,
 

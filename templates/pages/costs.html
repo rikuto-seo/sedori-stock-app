@@ -8,7 +8,7 @@
 
 <div class="purchase-page">
 
-    <h1 class="page-title">
+    <h1 class="page-title"><span class="eyebrow" style="display:block">EXPENSES</span>
         経費管理
     </h1>
 
@@ -234,8 +234,7 @@
 
             if (dateInput) {
 
-                dateInput.valueAsDate =
-                    new Date();
+                dateInput.value = localDate();
 
             }
 
@@ -348,7 +347,7 @@
                 memo: formData.get("memo")
             };
 
-            await fetch(
+            await apiRequest(
                 "/api/costs",
                 {
 
@@ -369,8 +368,7 @@
 
             document.querySelector(
                 'input[name="cost_date"]'
-            ).valueAsDate =
-                new Date();
+            ).value = localDate();
 
             totalAmountInput.value = "";
 
@@ -386,11 +384,7 @@
 
     async function loadCosts() {
 
-        const response =
-            await fetch("/api/costs");
-
-        const costs =
-            await response.json();
+        const costs = await apiRequest("/api/costs");
 
         renderCosts(costs);
 
@@ -433,7 +427,7 @@
                 </div>
 
                 <div class="cost-name">
-                    ${cost.name}
+                    ${escapeHTML(cost.name)}
                 </div>
 
                 <div class="cost-amount">
@@ -472,7 +466,7 @@
             return;
         }
 
-        await fetch(
+        await apiRequest(
             `/api/costs/${id}`,
             {
                 method: "DELETE"
